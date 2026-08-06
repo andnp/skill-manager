@@ -35,6 +35,9 @@ When context, epic choice, duplicate handling, or ticket boundaries are unclear,
 
 - Lead with what needs to change and why it matters; ground claims in supplied or gathered evidence, and keep implementation ideas in notes only when they add useful context.
 - Use a specific, outcome-first title. Include the affected workflow or user impact; omit story points, dates, and implementation details.
+- Write for a reader who may not have the codebase open: describe user-visible behavior, workflow, data, and impact instead of implementation structure.
+- Avoid function names, variable names, class names, file paths, module names, internal service names, and stack traces unless they are strictly necessary to identify an interface, compatibility boundary, or reproduction path.
+- When a low-level identifier is necessary, explain its role in plain language rather than assuming the reader knows the codebase.
 - Keep the description to one or two short paragraphs: explain the problem or desired outcome, then its impact, deliverable, relevant context, and key constraints.
 - Use plain, direct language. Avoid filler, buzzwords, fake certainty, and consultant-style phrasing.
 - Do not pad tickets with mirrored branches, checklists, or artifacts unless they are independently tracked planning units.

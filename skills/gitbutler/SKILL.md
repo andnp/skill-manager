@@ -5,34 +5,25 @@ description: "Commit, push, branch, and manage version control with GitButler. U
 
 # GitButler CLI Skill
 
-Use GitButler CLI (`but`) as the default version-control interface.
+Use GitButler CLI (`but`) only in repositories already managed by GitButler.
+In an ordinary Git repository, use the repository's normal Git workflow instead.
 
-## UNDERSTAND WHAT GITBUTLER DOES
+## Applicability
 
-GitButler manages multiple branches in parallel on a single `gitbutler/workspace` branch. 
-When you make changes, they exist in GitButler's internal state, NOT as real git commits yet.
+Before a GitButler mutation, run `but status -fv` to confirm the workspace and obtain current IDs.
+If the repository is not a GitButler workspace, stop using this skill and use Git instead.
 
-- `but status -fv` shows you GitButler's view: what branches exist, what changes are staged
-- Raw `git` commands show you actual git commits, which don't match GitButler's workspace state
-- This mismatch causes confusion: git shows one thing, but status shows another
-
-Using raw git to "fix" things makes it worse because:
-1. GitButler can't track what you did with git
-2. Your manual git operations desynchronize from GitButler's internal state
-3. oplog becomes useless (it can't restore to a state it didn't track)
-4. The only fix is manual user intervention
-
-GitButler is managing your branches for you. Let it do its job.
+GitButler manages multiple branches in parallel on a `gitbutler/workspace` branch.
+Its workspace state and ordinary Git commit history are not interchangeable.
 
 ## Non-Negotiable Rules
 
-1. **NEVER USE RAW GIT EVER.** Not `git status`, `git log`, `git show`, `git diff`, nothing. Use `but` for everything.
-2. Use `but` for all write operations. Never run `git add`, `git commit`, `git push`, `git checkout`, `git merge`, `git rebase`, `git stash`, or `git cherry-pick`. If the user says a `git` write command, translate it to `but` and run that.
+1. Use `but` for GitButler write operations. Do not use `git add`, `git commit`, `git push`, `git checkout`, `git merge`, `git rebase`, `git stash`, or `git cherry-pick` to modify a GitButler workspace.
+2. Read-only Git inspection is allowed when it helps explain repository history.
 3. After mutations, read the returned output for the updated workspace state.
 4. Use CLI IDs from `but status -fv` / `but diff` / `but show`; never hardcode IDs.
-5. Start with `but status -fv` before mutations so IDs and stack state are current.
-6. Create a branch for new work with `but branch new <name>` when needed.
-7. When in doubt, ask the user. Never experiment with destructive commands.
+5. Create a branch for new work with `but branch new <name>` when needed.
+6. When in doubt, ask the user. Never experiment with destructive commands.
 
 ## Command Patterns
 

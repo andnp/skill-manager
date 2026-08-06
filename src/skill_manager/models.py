@@ -19,3 +19,13 @@ class Skill:
     path: Path
     summary: str
     files: tuple[Path, ...]
+
+
+@dataclass(frozen=True)
+class InstalledSkill:
+    """A skill currently present in one harness's global directory."""
+
+    harness: str
+    name: str
+    path: Path
+    modified_at: float

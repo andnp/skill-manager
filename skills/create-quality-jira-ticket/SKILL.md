@@ -33,12 +33,13 @@ When context, epic choice, duplicate handling, or ticket boundaries are unclear,
 
 ## Writing rules
 
-- Lead with what needs to change and why it matters; keep implementation ideas in notes only when they add useful context.
+- Lead with what needs to change and why it matters; ground claims in supplied or gathered evidence, and keep implementation ideas in notes only when they add useful context.
 - Use a specific, outcome-first title. Include the affected workflow or user impact; omit story points, dates, and implementation details.
-- Keep the description to one or two short paragraphs: explain the problem or desired outcome, then its impact and relevant context.
+- Keep the description to one or two short paragraphs: explain the problem or desired outcome, then its impact, deliverable, relevant context, and key constraints.
 - Use plain, direct language. Avoid filler, buzzwords, fake certainty, and consultant-style phrasing.
+- Do not pad tickets with mirrored branches, checklists, or artifacts unless they are independently tracked planning units.
 - Add acceptance criteria only when they are already known, requested, or obvious from the request. Do not invent formalities.
-- Treat story points as rough planning signals, not promises. Include them only when requested or already supplied; distinguish ideal engineering time from elapsed team time when estimating.
+- Treat story points as rough planning signals, not promises. Include them only when requested or already supplied, and distinguish ideal engineering time from elapsed team time when estimating.
 
 ## Epic guidance
 

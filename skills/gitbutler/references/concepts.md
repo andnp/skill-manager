@@ -2,6 +2,21 @@
 
 Deep dive into GitButler's conceptual model and philosophy.
 
+## Contents
+
+- [Workspace Model](#the-workspace-model)
+- [CLI IDs](#cli-ids-short-identifiers)
+- [Parallel vs Stacked Branches](#parallel-vs-stacked-branches)
+- [Multiple Staging Areas](#multiple-staging-areas)
+- [The `but rub` Philosophy](#the-but-rub-philosophy)
+- [Dependency Tracking](#dependency-tracking)
+- [Empty Commits](#empty-commits-as-placeholders)
+- [Marks](#auto-staging-and-auto-commit-marks)
+- [Operation History](#operation-history-oplog)
+- [Applied vs Unapplied Branches](#applied-vs-unapplied-branches)
+- [Conflict Resolution](#conflict-resolution-mode)
+- [Read-Only Git](#read-only-git-commands)
+
 ## The Workspace Model
 
 ### Traditional Git: Serial Branching

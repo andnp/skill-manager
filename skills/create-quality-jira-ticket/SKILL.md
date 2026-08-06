@@ -39,7 +39,9 @@ When context, epic choice, duplicate handling, or ticket boundaries are unclear,
 - Avoid function names, variable names, class names, file paths, module names, internal service names, and stack traces unless they are strictly necessary to identify an interface, compatibility boundary, or reproduction path.
 - When a low-level identifier is necessary, explain its role in plain language rather than assuming the reader knows the codebase.
 - Keep the description to one or two short paragraphs: explain the problem or desired outcome, then its impact, deliverable, relevant context, and key constraints.
-- Use plain, direct language. Avoid filler, buzzwords, fake certainty, and consultant-style phrasing.
+- Keep tickets concise but complete: include enough context for a reader to understand the current problem, desired outcome, impact, and constraints without opening the codebase.
+- Use technical terms when they improve precision; keep all other wording simple and direct. Optimize for easy, effective communication rather than sounding impressive.
+- Avoid filler, buzzwords, fake certainty, and consultant-style phrasing.
 - Do not pad tickets with mirrored branches, checklists, or artifacts unless they are independently tracked planning units.
 - Add acceptance criteria only when they are already known, requested, or obvious from the request. Do not invent formalities.
 - Treat story points as rough planning signals, not promises. Include them only when requested or already supplied, and distinguish ideal engineering time from elapsed team time when estimating.

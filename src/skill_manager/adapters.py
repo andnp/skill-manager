@@ -1,0 +1,62 @@
+"""Filesystem adapters for the supported coding harnesses."""
+
+from dataclasses import dataclass
+from pathlib import Path
+
+SUPPORTED_HARNESSES = ("claude", "codex", "copilot", "agy", "opencode")
+ALIASES = {"copilot-cli": "copilot", "antigravity": "agy", "antigravity-cli": "agy"}
+
+
+@dataclass(frozen=True)
+class HarnessAdapter:
+    """Map source artifact paths into one harness's global config tree."""
+
+    name: str
+    skills_dir: Path
+    hooks_dir: Path
+    prompts_dir: Path
+
+    def root_for(self, kind: str) -> Path:
+        """Return the destination root for a supported artifact kind."""
+        try:
+            return {"skill": self.skills_dir, "hook": self.hooks_dir, "prompt": self.prompts_dir}[kind]
+        except KeyError as error:
+            raise ValueError(f"unsupported artifact kind: {kind}") from error
+
+    def destination(self, kind: str, name: str, relative_path: Path) -> Path:
+        """Return a concrete destination without allowing path traversal."""
+        relative = Path(relative_path)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError(f"unsafe artifact path: {relative_path}")
+        return self.root_for(kind) / name / relative
+
+
+def default_adapters(home: Path | None = None) -> dict[str, HarnessAdapter]:
+    """Build adapters using the current user's standard global locations."""
+    home = home or Path.home()
+    roots = {
+        "claude": home / ".claude",
+        "codex": home / ".codex",
+        "copilot": home / ".copilot",
+        "agy": home / ".gemini" / "config",
+        "opencode": home / ".config" / "opencode",
+    }
+    return {
+        name: HarnessAdapter(name, root / "skills", root / "hooks", root / "prompts")
+        for name, root in roots.items()
+    }
+
+
+def select_adapters(names: tuple[str, ...], home: Path | None = None) -> list[HarnessAdapter]:
+    """Resolve CLI names and preserve the requested order."""
+    adapters = default_adapters(home)
+    selected = names or SUPPORTED_HARNESSES
+    resolved: list[HarnessAdapter] = []
+    for requested in selected:
+        name = ALIASES.get(requested, requested)
+        if name not in adapters:
+            choices = ", ".join(SUPPORTED_HARNESSES)
+            raise ValueError(f"unknown harness '{requested}'; choose from {choices}")
+        if adapters[name] not in resolved:
+            resolved.append(adapters[name])
+    return resolved

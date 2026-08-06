@@ -24,3 +24,17 @@ Keep Jira focused on real planning units. Do not mirror branches, checklists, or
 3. Phrase semantic searches a couple of ways so synonyms and older terminology are covered.
 4. Inspect plausible matches with `corecli jira get ISSUE-KEY --json` and surface them before drafting new work.
 5. Treat the project key as `ENG` unless the user explicitly names another project.
+
+## Choose and present the shape
+
+Recommend exactly one outcome unless the user asks for alternatives:
+
+- Existing epic + task when the work belongs to an active stream.
+- Standalone task for short, self-contained work.
+- New epic + initial task only for multi-week, multi-owner, or multi-slice work.
+
+Draft a concrete outcome-first title and a concise one- or two-paragraph description covering what, why, deliverable, and key constraints. Hold the draft when evidence is missing; do not invent facts or acceptance criteria.
+
+Before any Jira mutation, show the recommendation, candidates considered, proposed titles, and draft content, then wait for explicit approval. After approval, use only the approved `corecli jira` create/update/move flows, preview writes with `--dry-run` when useful, and report resulting keys and links.
+
+For batched description backfills or similar updates, request approval in batches of three or fewer.

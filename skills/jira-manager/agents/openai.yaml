@@ -1,0 +1,7 @@
+interface:
+  display_name: "Jira Manager"
+  short_description: "Search, scope, and plan Jira work"
+  default_prompt: "Use $jira-manager to search, scope, and plan this Jira work before any write."
+
+policy:
+  allow_implicit_invocation: true

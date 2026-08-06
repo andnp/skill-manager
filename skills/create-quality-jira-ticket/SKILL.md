@@ -5,21 +5,20 @@ description: "Use when turning rough notes into a new Jira ticket, reviewing or 
 
 # Create a Quality Jira Ticket
 
-Turn rough notes into a clear Jira ticket, or tighten an existing draft without inventing missing facts.
+Turn rough notes into a clear Jira ticket, or tighten an existing draft without inventing missing facts. Pair with `jira-manager` when the task also needs Jira search, epic or duplicate scoping, or issue mutations.
 
 ## Choose the mode
 
 - **Draft:** create a new ticket from notes or a problem statement.
 - **Review:** assess and improve an existing draft while preserving its intent.
-- **Create:** use the available Jira workflow only after the draft, epic choice, and duplicate check are clear.
+- **Create:** use `corecli jira` only after `jira-manager` has completed the relevant search and scoping work and the user has approved the draft.
 
 ## Workflow
 
 1. Identify the desired outcome, affected workflow, user impact, and known constraints.
-2. For a new ticket, check the most relevant existing epic before drafting. If no epic fits, say so and recommend whether a new epic is warranted.
-3. Check likely open or recent tickets for duplicates. Prefer reusing or updating a near-duplicate unless the requested outcome is clearly different.
-4. Draft the ticket using the rules below. Surface uncertainty instead of filling gaps with guesses.
-5. Return the result in this shape:
+2. For Jira work in the RLCore repo, use `jira-manager` for context gathering, keyword search, semantic duplicate search, and epic selection before drafting.
+3. Draft the ticket using the rules below. Surface uncertainty instead of filling gaps with guesses.
+4. Return the result in this shape:
 
    ```text
    Title: <outcome-first title>
@@ -30,7 +29,7 @@ Turn rough notes into a clear Jira ticket, or tighten an existing draft without 
    Acceptance criteria: <only when known or requested>
    ```
 
-When epic choice, duplicate handling, or ticket boundaries are unclear, stop and surface the recommendation or question before creating the ticket.
+When context, epic choice, duplicate handling, or ticket boundaries are unclear, stop and surface the recommendation or question before creating the ticket. After explicit approval, use the approved `corecli jira` create flow and report the resulting key and link.
 
 ## Writing rules
 

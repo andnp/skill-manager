@@ -89,9 +89,13 @@ def discover(url: str, client: httpx.Client | None = None) -> list[DiscoveredSki
             response.raise_for_status()
             name = _slug(Path(root).name if root != "." else repo)
             skills.append(
-                DiscoveredSkill(name, _summary(response.text), f"{owner}/{repo}", root, tuple(
-                    path for path in files if path == skill_file or path.startswith(prefix)
-                ))
+                DiscoveredSkill(
+                    name,
+                    _summary(response.text),
+                    f"{owner}/{repo}",
+                    root,
+                    tuple(path for path in files if path == skill_file or path.startswith(prefix)),
+                )
             )
         return skills
     except httpx.HTTPError as error:

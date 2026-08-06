@@ -31,10 +31,7 @@ def load_variables(skill_dir: Path) -> dict[str, dict[str, str]]:
 def render_text(text: str, skill_dir: Path, harness: str) -> str:
     """Render ``{{ variable }}`` expressions for one harness."""
     variables = load_variables(skill_dir)
-    context = {
-        name: values.get(harness, values.get("default", ""))
-        for name, values in variables.items()
-    }
+    context = {name: values.get(harness, values.get("default", "")) for name, values in variables.items()}
     environment = SandboxedEnvironment(undefined=StrictUndefined, autoescape=False, keep_trailing_newline=True)
     try:
         return environment.from_string(text).render(context)

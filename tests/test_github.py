@@ -13,10 +13,12 @@ def test_discover_and_install_skill_package(tmp_path):
         if "/git/trees/main" in url:
             return httpx.Response(
                 200,
-                json={"tree": [
-                    {"path": "demo/SKILL.md", "type": "blob"},
-                    {"path": "demo/reference.md", "type": "blob"},
-                ]},
+                json={
+                    "tree": [
+                        {"path": "demo/SKILL.md", "type": "blob"},
+                        {"path": "demo/reference.md", "type": "blob"},
+                    ]
+                },
                 request=request,
             )
         if url.endswith("/demo/SKILL.md"):

@@ -42,8 +42,7 @@ def default_adapters(home: Path | None = None) -> dict[str, HarnessAdapter]:
         "opencode": home / ".config" / "opencode",
     }
     return {
-        name: HarnessAdapter(name, root / "skills", root / "hooks", root / "prompts")
-        for name, root in roots.items()
+        name: HarnessAdapter(name, root / "skills", root / "hooks", root / "prompts") for name, root in roots.items()
     }
 
 

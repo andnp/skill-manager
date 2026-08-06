@@ -1,0 +1,7 @@
+{
+  "subagent_model": {
+    "claude": "haiku",
+    "codex": "gpt-5.6-luna",
+    "default": "a cheap subagent model"
+  }
+}

@@ -26,7 +26,8 @@ def test_deploy_lists_and_extracts_newest_skill(tmp_path):
 
     results = deploy(source, adapters)
 
-    assert [result.changed_files for result in results] == [1, 1]
+    assert [result.changed_files for result in results[:2]] == [1, 1]
+    assert {result.skill for result in results[2:]} == {"hooks"}
     assert (home / ".claude/skills/demo/SKILL.md").read_text() == "Use haiku.\n"
     assert (home / ".codex/skills/demo/SKILL.md").read_text() == "Use cheap.\n"
     assert (home / ".claude/hooks/notify.sh").exists()

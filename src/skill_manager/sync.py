@@ -69,10 +69,14 @@ def deploy(
         source_root = root / f"{kind}s"
         if not source_root.exists():
             continue
-        for source in sorted(file for file in source_root.rglob("*") if file.is_file() and file.name != VARIABLES_NAME):
-            for adapter in adapters:
+        files = sorted(file for file in source_root.rglob("*") if file.is_file() and file.name != VARIABLES_NAME)
+        for adapter in adapters:
+            changed = 0
+            for source in files:
                 destination = adapter.root_for(kind) / source.relative_to(source_root)
-                _write_rendered(source, destination, source.parent, adapter.name, dry_run)
+                changed += _write_rendered(source, destination, source.parent, adapter.name, dry_run)
+            if files:
+                results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
     return results
 
 

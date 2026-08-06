@@ -16,6 +16,7 @@ Turn rough notes into a clear Jira ticket, or tighten an existing draft without 
 ## Workflow
 
 1. Identify the desired outcome, affected workflow, user impact, and known constraints.
+   If the reason this work matters is not already clear from the conversation, ask a focused "Why does this matter?" question before drafting. Skip the question when the context is already clear.
 2. For Jira work in the RLCore repo, use `jira-manager` for context gathering, keyword search, semantic duplicate search, and epic selection before drafting.
 3. Draft the ticket using the rules below. Surface uncertainty instead of filling gaps with guesses.
 4. Return the result in this shape:

@@ -8,6 +8,8 @@ from urllib.parse import quote, urlparse
 
 import httpx
 
+from .manifest import load_manifest
+
 
 class GitHubError(ValueError):
     """Raised when a repository cannot be inspected safely."""
@@ -103,7 +105,7 @@ def install(skill: DiscoveredSkill, root: Path, client: httpx.Client | None = No
     """Download one discovered skill into the source repository."""
     owner, repo = skill.repository.split("/", 1)
     branch_client = client or httpx.Client(timeout=20, headers=_headers())
-    destination_root = root / "skills" / skill.name
+    destination_root = root / load_manifest(root).source_dir / skill.name
     try:
         metadata = branch_client.get(f"https://api.github.com/repos/{owner}/{repo}")
         metadata.raise_for_status()

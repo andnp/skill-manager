@@ -4,6 +4,8 @@ from skill_manager.github import discover, install
 
 
 def test_discover_and_install_skill_package(tmp_path):
+    (tmp_path / "skill-manager.toml").write_text('[project]\nsource_dir = "catalog"\n', encoding="utf-8")
+
     def handler(request: httpx.Request) -> httpx.Response:
         url = str(request.url)
         if url.endswith("/repos/acme/demo"):
@@ -29,5 +31,5 @@ def test_discover_and_install_skill_package(tmp_path):
     client.close()
 
     assert found[0].summary == "Demo skill"
-    assert destination == tmp_path / "skills" / "demo"
+    assert destination == tmp_path / "catalog" / "demo"
     assert (destination / "reference.md").read_text() == "Reference"

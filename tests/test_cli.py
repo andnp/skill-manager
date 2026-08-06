@@ -22,7 +22,40 @@ def test_init_and_deploy_are_scriptable(tmp_path):
     skill.mkdir()
     (skill / "SKILL.md").write_text("Do the thing.\n", encoding="utf-8")
 
-    result = runner.invoke(main, ["--root", str(root), "--home", str(home), "deploy", "--harness", "claude"])
+    result = runner.invoke(
+        main,
+        [
+            "--root",
+            str(root),
+            "--home",
+            str(home),
+            "deploy",
+            "--harness",
+            "claude",
+            "--harness",
+            "codex",
+        ],
+    )
 
     assert result.exit_code == 0, result.output
     assert (home / ".claude/skills/demo/SKILL.md").read_text() == "Do the thing.\n"
+
+    (home / ".codex/skills/demo/SKILL.md").write_text("Edited by Codex.\n", encoding="utf-8")
+    result = runner.invoke(
+        main,
+        [
+            "--root",
+            str(root),
+            "--home",
+            str(home),
+            "extract",
+            "demo",
+            "--harness",
+            "claude",
+            "--harness",
+            "codex",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (home / ".claude/skills/demo/SKILL.md").read_text() == "Edited by Codex.\n"

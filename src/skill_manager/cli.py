@@ -161,12 +161,16 @@ def list_command(ctx: click.Context, harnesses: tuple[str, ...]) -> None:
 @click.pass_context
 def extract(ctx: click.Context, name: str, harnesses: tuple[str, ...], dry_run: bool) -> None:
     """Reconcile a skill from the newest deployed harness copy."""
+    adapters = _adapters(ctx, harnesses)
     try:
-        result = extract_skill(ctx.obj["root"], name, _adapters(ctx, harnesses), dry_run)
+        result = extract_skill(ctx.obj["root"], name, adapters, dry_run)
+        if not dry_run:
+            deploy(ctx.obj["root"], adapters, (name,))
     except (OSError, ValueError) as error:
         raise click.ClickException(str(error)) from error
     action = "would update" if dry_run else "updated"
-    console.print(f"[green]Extracted[/] {name}: {action} source from {result.harness} ({result.path})")
+    redeploy = " and redeployed it" if not dry_run else ""
+    console.print(f"[green]Extracted[/] {name}: {action}{redeploy} from {result.harness} ({result.path})")
 
 
 @main.command(name="discover")

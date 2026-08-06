@@ -1,6 +1,6 @@
 ---
 name: create-quality-jira-ticket
-description: "Use when drafting a new Jira ticket from rough notes, shaping a stronger issue title and description, reviewing a Jira draft for clarity, or improving ticket quality before filing."
+description: "Use when turning rough notes into a new Jira ticket, reviewing or rewriting an existing ticket draft, or preparing title, description, and acceptance criteria before filing. For broader Jira search, epic or duplicate scoping, issue updates, moves, comments, or creation workflow, use jira-manager."
 ---
 
 # Create a Quality Jira Ticket

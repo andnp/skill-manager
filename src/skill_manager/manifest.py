@@ -20,7 +20,13 @@ def load_manifest(root: Path) -> SourceManifest:
 
 
 def _summary(path: Path) -> str:
-    for line in path.read_text(encoding="utf-8").splitlines():
+    text = path.read_text(encoding="utf-8")
+    if text.startswith("---"):
+        frontmatter, _, text = text[3:].partition("---")
+        for line in frontmatter.splitlines():
+            if line.strip().startswith("description:"):
+                return line.split(":", 1)[1].strip().strip("\"'")
+    for line in text.splitlines():
         line = line.strip()
         if line and not line.startswith("#"):
             return line

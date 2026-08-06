@@ -1,7 +1,7 @@
 interface:
   display_name: "Quality Jira Ticket"
   short_description: "Draft or improve a clear Jira ticket"
-  default_prompt: "Use $create-quality-jira-ticket to turn these notes into a clear Jira ticket."
+  default_prompt: "Use $create-quality-jira-ticket to draft this ticket after $jira-manager checks context and duplicates."
 
 policy:
   allow_implicit_invocation: true

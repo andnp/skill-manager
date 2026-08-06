@@ -1,0 +1,7 @@
+interface:
+  display_name: "Delegate to a Subagent"
+  short_description: "Delegate bounded work to a subagent"
+  default_prompt: "Use $sub to delegate this bounded task to a reviewed subagent."
+
+policy:
+  allow_implicit_invocation: true

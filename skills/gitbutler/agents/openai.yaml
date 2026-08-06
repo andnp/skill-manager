@@ -1,0 +1,7 @@
+interface:
+  display_name: "GitButler Workflow"
+  short_description: "Use GitButler in managed workspaces"
+  default_prompt: "Use $gitbutler to manage changes in a GitButler workspace."
+
+policy:
+  allow_implicit_invocation: true

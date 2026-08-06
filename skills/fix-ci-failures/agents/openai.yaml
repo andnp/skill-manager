@@ -1,0 +1,7 @@
+interface:
+  display_name: "Fix CI Failures"
+  short_description: "Diagnose and fix failing CI checks"
+  default_prompt: "Use $fix-ci-failures to diagnose the failing CI checks."
+
+policy:
+  allow_implicit_invocation: true

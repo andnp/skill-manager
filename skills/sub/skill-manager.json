@@ -2,6 +2,7 @@
   "subagent_model": {
     "claude": "haiku",
     "codex": "gpt-5.6-luna",
-    "default": "a cheap subagent model"
+    "copilot": "auto",
+    "default": "the harness default low-cost model"
   }
 }

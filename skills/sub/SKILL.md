@@ -5,14 +5,14 @@ description: "Meta-prompting skill: synthesize the current task into a focused p
 
 # Sub — Delegate to a Cheap Agent
 
-Your job is to be the **prompt engineer**, not the implementer. Stop, think about what the task actually requires, write a crisp sub-agent prompt, then hand it off.
+Your job is to be the **prompt engineer**, not the implementer. Decide whether the task is bounded enough to delegate, write a crisp sub-agent prompt, then hand it off when the current harness supports delegation.
 
 ## Steps
 
-1. **Understand the task** — clarify scope if ambiguous; ask one targeted question rather than proceeding blind.
+1. **Assess the task** — delegate only bounded, reversible work with a clear success condition. Handle ambiguous, high-risk, or judgment-heavy work yourself.
 2. **Draft the sub-agent prompt** — see format below. Think carefully: the sub-agent has no conversation context beyond what you write.
-3. **Delegate** — call the `Agent` tool with the `{{ subagent_model }}` model and your crafted prompt.
-4. **Review** — inspect the result; report a concise summary to the user. Apply or save the output as appropriate.
+3. **Delegate** — use the current harness's subagent mechanism. Request the `{{ subagent_model }}` model when it accepts an explicit model; otherwise use its default low-cost subagent. If no delegation mechanism is available, handle the task yourself and say so.
+4. **Review** — verify the result before using it. Report the outcome, changed files, checks run, and unresolved questions; do not apply unverified output blindly.
 
 ## Sub-agent prompt format
 
@@ -28,10 +28,10 @@ Write the prompt as if briefing a capable colleague who just walked in with zero
 
 ## Output
 <exact format expected: code block, list, JSON schema, prose, etc.>
-<any hard constraints: line limits, style rules, no new dependencies, etc.>
+<hard constraints: line limits, style rules, no new dependencies, etc.>
 ```
 
-## Good candidates for /sub
+## Good candidates
 
 - Generating repetitive code (test stubs, boilerplate, config)
 - Drafting documentation or commit messages
@@ -40,14 +40,15 @@ Write the prompt as if briefing a capable colleague who just walked in with zero
 - Tasks that require tool use (file reads, edits, shell commands, git ops) — a cheap agent handles tools fine
 - Multi-step tasks where the steps are mechanical and the goal is unambiguous
 
-## Bad candidates (handle yourself instead)
+## Bad candidates
 
 - Tasks so ambiguous that even you couldn't write a clear prompt for them
 - Judgment calls that require weighing the full conversation history to decide correctly
-- Tasks explicitly requiring Opus/Sonnet-tier reasoning (rare — default to delegating and only hold back if clearly warranted)
+- Security-sensitive, irreversible, or high-impact changes
+- Tasks explicitly requiring a stronger model than the configured subagent
 
-**Bias strongly toward delegating.** The failure mode to avoid is deciding a task is "too complex for a cheap agent" based on step count or tool use — that's often unnecessary. The question is whether the *prompt* you write is clear enough, not whether the agent can execute it.
+Delegate when the task is well-scoped and the expected review cost is lower than doing the work directly. Do not delegate merely because a task has multiple steps.
 
-## Model note
+## Model selection
 
-Sub-agents are spawned with the configured low-cost model. It should be fast and capable of multi-step tool use. Default to delegating; only handle the task yourself if you genuinely cannot write a prompt clear enough for a capable model to execute correctly.
+`subagent_model` is a harness-specific preference, not a guarantee that every harness accepts the same model identifier. Prefer the configured fallback when the requested model is unavailable.

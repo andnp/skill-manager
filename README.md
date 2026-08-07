@@ -64,4 +64,5 @@ files removed upstream are removed locally too.
 Use `skill-manager export NAME --repo PATH --harness NAME` for a one-time export
 to a repository-local harness directory. For example, `--harness claude` writes
 to `PATH/.claude/skills/NAME`; exports do not update global harness files or
-`state.yaml`.
+`state.yaml`. The optional `agents/openai.yaml` file is included only for Codex;
+other harnesses omit it and remove stale copies during deployment.

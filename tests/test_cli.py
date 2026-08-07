@@ -11,7 +11,7 @@ def test_help_documents_commands():
     result = CliRunner().invoke(main, ["--help"])
 
     assert result.exit_code == 0
-    for command in ("init", "deploy", "list", "extract", "discover", "install", "update"):
+    for command in ("init", "deploy", "export", "list", "extract", "discover", "install", "update"):
         assert command in result.output
 
 
@@ -95,3 +95,41 @@ def test_update_replays_saved_selection(tmp_path, monkeypatch):
 
     assert result.exit_code == 0, result.output
     assert installed == ["beta"]
+
+
+def test_export_copies_rendered_skill_to_repository_harness(tmp_path):
+    source = tmp_path / "source"
+    target = tmp_path / "monorepo"
+    home = tmp_path / "home"
+    skill = source / "skills" / "demo"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("Use {{ audience }}.\n", encoding="utf-8")
+    (skill / "skill-manager.json").write_text('{"audience": {"claude": "Claude"}}', encoding="utf-8")
+    references = skill / "references"
+    references.mkdir()
+    (references / "guide.md").write_text("Guide for {{ audience }}.\n", encoding="utf-8")
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        ["--root", str(source), "--home", str(home), "export", "demo", "--repo", str(target), "--harness", "claude"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (target / ".claude/skills/demo/SKILL.md").read_text() == "Use Claude.\n"
+    assert (target / ".claude/skills/demo/references/guide.md").read_text() == "Guide for Claude.\n"
+    assert not (home / ".claude/skills/demo").exists()
+    assert not (source / "state.yaml").exists()
+
+
+def test_export_reports_missing_source_skill(tmp_path):
+    target = tmp_path / "monorepo"
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        ["--root", str(tmp_path / "source"), "export", "missing", "--repo", str(target), "--harness", "claude"],
+    )
+
+    assert result.exit_code != 0
+    assert "source skill not found: missing" in result.output

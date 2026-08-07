@@ -26,6 +26,14 @@ When principles conflict, prioritize in this order: user-visible or contractual 
 
 ## Workflow for writing tests
 
+### 0. Classify the change before writing code
+
+- **Bug fix:** reproduce the bug with a focused failing regression test, then fix it.
+- **New behavior:** define the observable contract and cases before implementation; use red–green–refactor when practical.
+- **Refactor:** preserve existing behavior and change tests only when the contract changes.
+
+For cross-component behavior, consider starting with a thin acceptance test or walking skeleton, then drive the internals with focused tests. Record the risk, boundary, and intended cases before implementation when the change is non-trivial.
+
 ### 1. Understand the behavior and local conventions
 
 Before editing, inspect the implementation, its public interfaces, nearby tests, fixtures, test commands, and project conventions. Reuse existing helpers and data builders when they make scenarios clearer. Do not invent a new framework, test style, or directory layout when the project already has one.

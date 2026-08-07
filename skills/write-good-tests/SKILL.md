@@ -101,13 +101,11 @@ For larger tests, provide clear failure output, trace or diagnostic artifacts, a
 
 When asked to write tests, produce:
 
-- Tests named after the behavior and scenario, not the method alone.
-- Cases covering the relevant normal, boundary, invalid, and failure behaviors.
-- The smallest appropriate mix of test levels, with a brief reason for each larger test.
-- Deterministic setup and cleanup, with external state isolated.
-- Assertions tied to behavior or a documented contract.
-- No tests that inspect private implementation details, duplicate low-value coverage, or encode incidental call sequences.
-- A concise note of assumptions, uncovered risks, and commands run.
+- Behavior-named tests covering relevant normal, boundary, invalid, and failure cases.
+- The smallest appropriate mix of test levels, with a reason for each larger test.
+- Deterministic setup, isolated external state, and assertions tied to a contract.
+- No private-state inspection, low-value duplication, or incidental call-sequence checks.
+- A concise note of assumptions, residual risks, and commands run.
 
 When reviewing existing tests, classify findings as missing risk coverage, false confidence, brittleness, nondeterminism/flakiness, slow feedback, unclear failure diagnosis, or unnecessary duplication. Fix the test design, not merely the symptom.
 
@@ -128,9 +126,7 @@ Before finishing, ask:
 
 - What user-visible or contractual behavior does each test protect?
 - Would the test still pass after a correct refactor?
-- Is the test isolated, deterministic, and fast enough for its role?
-- Did the cases include meaningful boundaries and failure modes?
-- Is a real dependency, fake, or mock the right choice here?
-- Does a failure explain what broke and why?
-- Is every larger or slower test justified by a distinct risk?
-- Did I run the relevant checks and report their result honestly?
+- Is it isolated, deterministic, fast enough, and clear when it fails?
+- Did the cases cover meaningful boundaries, failures, and residual risks?
+- Is the dependency strategy and test boundary justified?
+- Did I run the relevant checks and report the result honestly?

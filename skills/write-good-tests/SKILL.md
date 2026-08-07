@@ -57,6 +57,8 @@ Use the narrowest suitable level, but do not force a unit test where the risk is
 
 Use more than one level when each level answers a different question. Do not duplicate the same assertion across every layer without a reason.
 
+Contract tests answer “can these independently deployed systems communicate?”; integration tests answer “do these components work together in this environment?” Use consumer/provider contracts when compatibility matters more than shared deployment.
+
 ### 3. Build a behavior and risk matrix
 
 For each behavior, consider:
@@ -70,6 +72,8 @@ For each behavior, consider:
 7. Accessibility, localization, compatibility, observability, and performance where relevant.
 
 Select cases by risk and behavior, not by mechanically enumerating every branch. Parameterize only when the cases remain easy to understand and failures identify the specific scenario.
+
+When a rule is an invariant over a broad input space, consider property-based or fuzz testing with controlled seeds and shrinkable failures. Use examples alongside generated cases for readability.
 
 ### 4. Implement readable, robust tests
 
@@ -91,7 +95,7 @@ When using doubles:
 
 Run the narrowest relevant test command first, then the broader project checks required by local conventions. Investigate failures rather than weakening assertions or adding retries by default. A flaky test is a defect in the testing system until its cause is understood.
 
-For larger tests, provide clear failure output, trace or diagnostic artifacts, ownership, and a reason the test cannot be smaller. Keep the main developer workflow fast; isolate expensive suites to appropriate build, release, or scheduled stages.
+For larger tests, provide clear failure output, trace or diagnostic artifacts, a named owner, and a reason the test cannot be smaller. Keep the main developer workflow fast; isolate expensive suites to appropriate build, release, or scheduled stages.
 
 ## Test-case output requirements
 

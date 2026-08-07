@@ -57,9 +57,11 @@ def test_deploy_writes_harness_agent_files(tmp_path):
     (agents / "shared.md").write_text("# Shared\n", encoding="utf-8")
     (agents / "claude.md").write_text("## Claude\n", encoding="utf-8")
     (agents / "codex.md").write_text("## Codex\n", encoding="utf-8")
-    adapters = select_adapters(("claude", "codex"), home=home)
+    (agents / "agy.md").write_text("## Agy\n", encoding="utf-8")
+    adapters = select_adapters(("claude", "codex", "agy"), home=home)
 
     deploy(source, adapters)
 
     assert (home / ".claude/CLAUDE.md").read_text() == "# Shared\n\n## Claude\n"
     assert (home / ".codex/AGENTS.md").read_text() == "# Shared\n\n## Codex\n"
+    assert (home / ".gemini/config/AGENTS.md").read_text() == "# Shared\n\n## Agy\n"

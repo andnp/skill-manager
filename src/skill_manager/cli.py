@@ -11,7 +11,7 @@ from . import __version__
 from .adapters import ALIASES, SUPPORTED_HARNESSES, select_adapters
 from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
-from .state import save_github_selection
+from .state import load_github_sources, save_github_selection
 from .sync import deploy, extract_skill, list_installed
 
 console = Console()
@@ -230,3 +230,26 @@ def install_command(ctx: click.Context, repository: str, names: tuple[str, ...])
         raise click.ClickException(f"discovered skill(s) not found: {', '.join(missing)}")
     _show_discovered(selected)
     _install_selected(ctx, repository, selected, dry_run=False)
+
+
+@main.command(name="update")
+@click.pass_context
+def update_command(ctx: click.Context) -> None:
+    """Fetch the latest version of every saved GitHub skill selection."""
+    sources = load_github_sources(ctx.obj["root"])
+    if not sources:
+        console.print("[yellow]No saved GitHub skill selections found.[/]")
+        return
+    for source in sources:
+        try:
+            discovered = {skill.name: skill for skill in discover(source.repository)}
+        except GitHubError as error:
+            raise click.ClickException(str(error)) from error
+        missing = sorted(set(source.skills) - discovered.keys())
+        if missing:
+            raise click.ClickException(
+                f"{source.repository}: saved skill(s) not found: {', '.join(missing)}"
+            )
+        selected = [discovered[name] for name in source.skills]
+        _install_selected(ctx, source.repository, selected, dry_run=False)
+    console.print(f"[green]Updated[/] {sum(len(source.skills) for source in sources)} skill(s).")

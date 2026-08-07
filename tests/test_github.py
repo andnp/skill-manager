@@ -29,9 +29,13 @@ def test_discover_and_install_skill_package(tmp_path):
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
     found = discover("https://github.com/acme/demo", client)
+    stale = tmp_path / "catalog" / "demo" / "stale.md"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("old", encoding="utf-8")
     destination = install(found[0], tmp_path, client)
     client.close()
 
     assert found[0].summary == "Demo skill"
     assert destination == tmp_path / "catalog" / "demo"
     assert (destination / "reference.md").read_text() == "Reference"
+    assert not stale.exists()

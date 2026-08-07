@@ -2,6 +2,8 @@
 
 import os
 import re
+import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote, urlparse
@@ -110,6 +112,8 @@ def install(skill: DiscoveredSkill, root: Path, client: httpx.Client | None = No
     owner, repo = skill.repository.split("/", 1)
     branch_client = client or httpx.Client(timeout=20, headers=_headers())
     destination_root = root / load_manifest(root).source_dir / skill.name
+    destination_root.parent.mkdir(parents=True, exist_ok=True)
+    staging_root = Path(tempfile.mkdtemp(prefix=f".{skill.name}-", dir=destination_root.parent))
     try:
         metadata = branch_client.get(f"https://api.github.com/repos/{owner}/{repo}")
         metadata.raise_for_status()
@@ -121,12 +125,17 @@ def install(skill: DiscoveredSkill, root: Path, client: httpx.Client | None = No
             raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{quote(branch)}/{quote(remote_path)}"
             response = branch_client.get(raw_url)
             response.raise_for_status()
-            target = destination_root / relative
+            target = staging_root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(response.content)
+        if destination_root.exists():
+            shutil.rmtree(destination_root)
+        staging_root.replace(destination_root)
         return destination_root
     except httpx.HTTPError as error:
         raise GitHubError(f"GitHub request failed: {error}") from error
     finally:
+        if staging_root.exists():
+            shutil.rmtree(staging_root)
         if client is None:
             branch_client.close()

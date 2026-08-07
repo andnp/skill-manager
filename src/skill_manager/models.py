@@ -22,6 +22,15 @@ class Skill:
 
 
 @dataclass(frozen=True)
+class AgentSource:
+    """Shared and harness-specific Markdown used to build one agent file."""
+
+    root: Path
+    shared: Path | None
+    overrides: dict[str, Path]
+
+
+@dataclass(frozen=True)
 class InstalledSkill:
     """A skill currently present in one harness's global directory."""
 

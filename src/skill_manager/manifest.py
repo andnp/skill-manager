@@ -3,10 +3,12 @@
 import tomllib
 from pathlib import Path
 
-from .models import Skill, SourceManifest
+from .models import AgentSource, Skill, SourceManifest
 
 MANIFEST_NAME = "skill-manager.toml"
 VARIABLES_NAME = "skill-manager.json"
+AGENTS_DIR = "agents"
+AGENT_SHARED_NAME = "shared.md"
 
 
 def load_manifest(root: Path) -> SourceManifest:
@@ -45,3 +47,14 @@ def load_skills(root: Path, manifest: SourceManifest | None = None) -> list[Skil
         markdown = next((file for file in files if file.name.lower() in {"skill.md", "readme.md"}), None)
         skills.append(Skill(path.name, path, _summary(markdown) if markdown else "No summary provided", files))
     return skills
+
+
+def load_agent_source(root: Path) -> AgentSource | None:
+    """Find shared and harness-specific agent Markdown in the source repo."""
+    source_root = root / AGENTS_DIR
+    if not source_root.exists():
+        return None
+    files = sorted(file for file in source_root.iterdir() if file.is_file() and file.suffix.lower() == ".md")
+    shared = next((file for file in files if file.name.lower() == AGENT_SHARED_NAME), None)
+    overrides = {file.stem.lower(): file for file in files if file != shared}
+    return AgentSource(source_root, shared, overrides)

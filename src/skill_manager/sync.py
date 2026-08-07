@@ -4,7 +4,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from .adapters import HarnessAdapter
+from .adapters import HarnessAdapter, select_adapters
 from .manifest import VARIABLES_NAME, load_agent_source, load_manifest, load_skills
 from .models import InstalledSkill, Skill
 from .rendering import render_agent_file, render_file
@@ -59,6 +59,14 @@ def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = F
         )
         results.append(Deployment(adapter.name, skill.name, changed, len(skill.files)))
     return results
+
+
+def export_skill(root: Path, destination: Path, name: str, harness: str) -> Deployment:
+    """Export one source skill into one repository-local harness directory."""
+    skill = next((item for item in load_skills(root) if item.name == name), None)
+    if skill is None:
+        raise ValueError(f"source skill not found: {name}")
+    return deploy_skill(skill, select_adapters((harness,), home=destination))[0]
 
 
 def deploy(

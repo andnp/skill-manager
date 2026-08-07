@@ -26,6 +26,9 @@ def test_init_and_deploy_are_scriptable(tmp_path):
     skill = root / "skills" / "demo"
     skill.mkdir()
     (skill / "SKILL.md").write_text("Do the thing.\n", encoding="utf-8")
+    metadata = skill / "agents" / "openai.yaml"
+    metadata.parent.mkdir()
+    metadata.write_text("interface:\n  display_name: Demo\n", encoding="utf-8")
 
     result = runner.invoke(
         main,
@@ -44,6 +47,8 @@ def test_init_and_deploy_are_scriptable(tmp_path):
 
     assert result.exit_code == 0, result.output
     assert (home / ".claude/skills/demo/SKILL.md").read_text() == "Do the thing.\n"
+    assert not (home / ".claude/skills/demo/agents/openai.yaml").exists()
+    assert (home / ".codex/skills/demo/agents/openai.yaml").read_text() == metadata.read_text()
 
     (home / ".codex/skills/demo/SKILL.md").write_text("Edited by Codex.\n", encoding="utf-8")
     result = runner.invoke(
@@ -105,10 +110,16 @@ def test_export_copies_rendered_skill_to_repository_harness(tmp_path):
     skill.mkdir(parents=True)
     (skill / "SKILL.md").write_text("Use {{ audience }}.\n", encoding="utf-8")
     (skill / "skill-manager.json").write_text('{"audience": {"claude": "Claude"}}', encoding="utf-8")
+    metadata = skill / "agents" / "openai.yaml"
+    metadata.parent.mkdir()
+    metadata.write_text("interface:\n  display_name: Demo\n", encoding="utf-8")
     references = skill / "references"
     references.mkdir()
     (references / "guide.md").write_text("Guide for {{ audience }}.\n", encoding="utf-8")
     target.mkdir()
+    stale = target / ".claude/skills/demo/agents/openai.yaml"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("old metadata\n", encoding="utf-8")
 
     result = CliRunner().invoke(
         main,
@@ -118,6 +129,15 @@ def test_export_copies_rendered_skill_to_repository_harness(tmp_path):
     assert result.exit_code == 0, result.output
     assert (target / ".claude/skills/demo/SKILL.md").read_text() == "Use Claude.\n"
     assert (target / ".claude/skills/demo/references/guide.md").read_text() == "Guide for Claude.\n"
+    assert not (target / ".claude/skills/demo/agents/openai.yaml").exists()
+
+    result = CliRunner().invoke(
+        main,
+        ["--root", str(source), "export", "demo", "--repo", str(target), "--harness", "codex"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (target / ".codex/skills/demo/agents/openai.yaml").read_text() == metadata.read_text()
     assert not (home / ".claude/skills/demo").exists()
     assert not (source / "state.yaml").exists()
 

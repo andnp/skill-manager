@@ -27,6 +27,7 @@ skill-manager list [--harness NAME]
 skill-manager extract NAME [--harness NAME]
 skill-manager discover OWNER/REPOSITORY
 skill-manager install OWNER/REPOSITORY [--skill NAME]
+skill-manager update
 ```
 
 Use `skill-manager COMMAND --help` for complete options. `--root` selects a
@@ -37,3 +38,18 @@ The supported harness names are `claude`, `codex`, `copilot`, `agy`, and
 Skills use Jinja-compatible Handlebars-style expressions such as
 `{{ my_variable }}`. Values come from `skill-manager.json` in the skill folder
 and select the matching harness key before falling back to `default`.
+
+`discover` lists every `SKILL.md` package it finds and accepts a comma-separated
+multi-selection by number, or `all`. After installation, selected repositories
+and skills are saved in `state.yaml` at the source root:
+
+```yaml
+github:
+  - repository: OWNER/REPOSITORY
+    skills:
+      - skill-name
+```
+
+Run `skill-manager update` to fetch the current default branch for every saved
+repository and redeploy its selected skills. The local package is replaced so
+files removed upstream are removed locally too.

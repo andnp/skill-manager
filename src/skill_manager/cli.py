@@ -11,6 +11,7 @@ from . import __version__
 from .adapters import ALIASES, SUPPORTED_HARNESSES, select_adapters
 from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
+from .state import save_github_selection
 from .sync import deploy, extract_skill, list_installed
 
 console = Console()
@@ -34,7 +35,22 @@ def _show_discovered(skills: list[DiscoveredSkill]) -> None:
     console.print(table)
 
 
-def _install_selected(ctx: click.Context, selected: list[DiscoveredSkill], dry_run: bool) -> None:
+def _select_discovered(skills: list[DiscoveredSkill]) -> list[DiscoveredSkill]:
+    console.print("Select skills by number, separated by commas, or choose 'all'.")
+    value = click.prompt("Selection", default="all")
+    if value.strip().lower() == "all":
+        return skills
+    selected: list[DiscoveredSkill] = []
+    for token in value.split(","):
+        try:
+            index = int(token.strip()) - 1
+            selected.append(skills[index])
+        except (ValueError, IndexError) as error:
+            raise click.ClickException(f"invalid skill selection: {token.strip()}") from error
+    return list(dict.fromkeys(selected))
+
+
+def _install_selected(ctx: click.Context, repository: str, selected: list[DiscoveredSkill], dry_run: bool) -> None:
     if dry_run:
         console.print(f"[yellow]Dry run:[/] would install {len(selected)} skill(s).")
         return
@@ -43,6 +59,8 @@ def _install_selected(ctx: click.Context, selected: list[DiscoveredSkill], dry_r
             destination = install(skill, ctx.obj["root"])
             deploy(ctx.obj["root"], _adapters(ctx, ()), (skill.name,))
             console.print(f"[green]Installed[/] {skill.name} → {destination}")
+        if selected:
+            save_github_selection(ctx.obj["root"], repository, tuple(skill.name for skill in selected))
     except (GitHubError, OSError, ValueError) as error:
         raise click.ClickException(str(error)) from error
 
@@ -191,9 +209,9 @@ def discover_command(ctx: click.Context, repository: str, yes: bool, dry_run: bo
     selected = (
         skills
         if yes or dry_run
-        else [skill for skill in skills if click.confirm(f"Install {skill.name}?", default=False)]
+        else _select_discovered(skills)
     )
-    _install_selected(ctx, selected, dry_run)
+    _install_selected(ctx, repository, selected, dry_run)
 
 
 @main.command(name="install")
@@ -211,4 +229,4 @@ def install_command(ctx: click.Context, repository: str, names: tuple[str, ...])
     if missing:
         raise click.ClickException(f"discovered skill(s) not found: {', '.join(missing)}")
     _show_discovered(selected)
-    _install_selected(ctx, selected, dry_run=False)
+    _install_selected(ctx, repository, selected, dry_run=False)

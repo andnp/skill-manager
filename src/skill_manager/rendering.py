@@ -8,6 +8,7 @@ from jinja2 import StrictUndefined, TemplateError
 from jinja2.sandbox import SandboxedEnvironment
 
 from .manifest import VARIABLES_NAME
+from .models import AgentSource
 
 
 class VariableError(ValueError):
@@ -45,3 +46,12 @@ def render_file(path: Path, skill_dir: Path, harness: str) -> bytes:
     if b"\x00" in content:
         return content
     return render_text(content.decode("utf-8"), skill_dir, harness).encode("utf-8")
+
+
+def render_agent_file(source: AgentSource, harness: str) -> bytes:
+    """Compose shared and harness-specific agent Markdown."""
+    files = [file for file in (source.shared, source.overrides.get(harness)) if file]
+    if not files:
+        return b""
+    parts = [render_file(file, source.root, harness).decode("utf-8").rstrip("\n") for file in files]
+    return "\n\n".join(parts).encode("utf-8") + b"\n"

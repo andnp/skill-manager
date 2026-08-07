@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .adapters import HarnessAdapter
-from .manifest import VARIABLES_NAME, load_manifest, load_skills
+from .manifest import VARIABLES_NAME, load_agent_source, load_manifest, load_skills
 from .models import InstalledSkill, Skill
-from .rendering import render_file
+from .rendering import render_agent_file, render_file
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,10 @@ class Extraction:
 
 
 def _write_rendered(source: Path, destination: Path, skill_dir: Path, harness: str, dry_run: bool) -> bool:
-    content = render_file(source, skill_dir, harness)
+    return _write_content(render_file(source, skill_dir, harness), destination, dry_run)
+
+
+def _write_content(content: bytes, destination: Path, dry_run: bool) -> bool:
     if destination.exists() and destination.read_bytes() == content:
         return False
     if not dry_run:
@@ -77,6 +80,13 @@ def deploy(
                 changed += _write_rendered(source, destination, source.parent, adapter.name, dry_run)
             if files:
                 results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
+    agent_source = load_agent_source(root)
+    if agent_source and (agent_source.shared or agent_source.overrides):
+        for adapter in adapters:
+            changed = _write_content(
+                render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
+            )
+            results.append(Deployment(adapter.name, "agents", int(changed), 1))
     return results
 
 

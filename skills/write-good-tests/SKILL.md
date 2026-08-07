@@ -24,6 +24,8 @@ Follow these principles in every test task:
 
 When principles conflict, prioritize in this order: user-visible or contractual behavior, risk reduction, determinism, useful feedback, maintainability, then convenience or raw coverage.
 
+Evaluate each proposed test against four quality pillars: protection against regressions, resistance to harmless refactoring, fast feedback, and maintainability. A test that is strong on only one pillar may still be a poor trade.
+
 ## Workflow for writing tests
 
 ### 0. Classify the change before writing code

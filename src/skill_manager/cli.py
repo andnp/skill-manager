@@ -12,7 +12,7 @@ from .adapters import ALIASES, SUPPORTED_HARNESSES, select_adapters
 from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
 from .state import load_github_sources, save_github_selection
-from .sync import deploy, extract_skill, list_installed
+from .sync import deploy, export_skill, extract_skill, list_installed
 
 console = Console()
 HARNESS_CHOICES = (*SUPPORTED_HARNESSES, *ALIASES)
@@ -138,6 +138,20 @@ def deploy_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[
     for result in results:
         table.add_row(result.harness, result.skill, str(result.changed_files), str(result.planned_files))
     console.print(table)
+
+
+@main.command(name="export")
+@click.argument("name")
+@click.option("--repo", "repository", required=True, type=click.Path(path_type=Path, exists=True, file_okay=False))
+@click.option("--harness", required=True, type=click.Choice(HARNESS_CHOICES))
+@click.pass_context
+def export_command(ctx: click.Context, name: str, repository: Path, harness: str) -> None:
+    """Export one source skill to one repository-local harness directory."""
+    try:
+        export_skill(ctx.obj["root"], repository.expanduser().resolve(), name, harness)
+    except (OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    console.print(f"[green]Exported[/] {name} → {harness} ({repository})")
 
 
 @main.command(name="list")

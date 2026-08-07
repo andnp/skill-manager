@@ -40,3 +40,19 @@ def test_deploy_lists_and_extracts_newest_skill(tmp_path):
 
     assert extracted.harness == "codex"
     assert (skill / "SKILL.md").read_text() == "Edited by Codex.\n"
+
+
+def test_deploy_writes_harness_agent_files(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    agents = source / "agents"
+    agents.mkdir(parents=True)
+    (agents / "shared.md").write_text("# Shared\n", encoding="utf-8")
+    (agents / "claude.md").write_text("## Claude\n", encoding="utf-8")
+    (agents / "codex.md").write_text("## Codex\n", encoding="utf-8")
+    adapters = select_adapters(("claude", "codex"), home=home)
+
+    deploy(source, adapters)
+
+    assert (home / ".claude/CLAUDE.md").read_text() == "# Shared\n\n## Claude\n"
+    assert (home / ".codex/AGENTS.md").read_text() == "# Shared\n\n## Codex\n"

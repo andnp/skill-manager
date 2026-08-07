@@ -29,6 +29,7 @@ file first, appends the matching override, and writes `CLAUDE.md` for Claude or
 ```bash
 skill-manager init
 skill-manager deploy [--skill NAME] [--harness claude] [--dry-run]
+skill-manager export NAME --repo PATH --harness claude
 skill-manager list [--harness NAME]
 skill-manager extract NAME [--harness NAME]
 skill-manager discover OWNER/REPOSITORY
@@ -59,3 +60,8 @@ github:
 Run `skill-manager update` to fetch the current default branch for every saved
 repository and redeploy its selected skills. The local package is replaced so
 files removed upstream are removed locally too.
+
+Use `skill-manager export NAME --repo PATH --harness NAME` for a one-time export
+to a repository-local harness directory. For example, `--harness claude` writes
+to `PATH/.claude/skills/NAME`; exports do not update global harness files or
+`state.yaml`.

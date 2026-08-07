@@ -43,6 +43,16 @@ def _write_content(content: bytes, destination: Path, dry_run: bool) -> bool:
     return True
 
 
+def _remove_stale_files(root: Path, expected: set[Path], dry_run: bool) -> int:
+    if not root.exists():
+        return 0
+    stale = [file for file in root.rglob("*") if file.is_file() and file.relative_to(root) not in expected]
+    if not dry_run:
+        for file in stale:
+            file.unlink()
+    return len(stale)
+
+
 def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = False) -> list[Deployment]:
     """Render and deploy one skill to every selected harness."""
     results: list[Deployment] = []
@@ -62,11 +72,9 @@ def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = F
             )
             for source in files
         )
-        metadata = adapter.destination("skill", skill.name, Path("agents/openai.yaml"))
-        if adapter.name != "codex" and metadata.is_file():
-            if not dry_run:
-                metadata.unlink()
-            changed += 1
+        destination_root = adapter.root_for("skill") / skill.name
+        expected = {source.relative_to(skill.path) for source in files}
+        changed += _remove_stale_files(destination_root, expected, dry_run)
         results.append(Deployment(adapter.name, skill.name, changed, len(files)))
     return results
 

@@ -33,6 +33,13 @@ def test_deploy_lists_and_extracts_newest_skill(tmp_path):
     assert (home / ".claude/hooks/notify.sh").exists()
     assert len(list_installed(adapters)) == 2
 
+    stale = home / ".claude/skills/demo/references/removed.md"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("old\n", encoding="utf-8")
+    (skill / "SKILL.md").write_text("Updated.\n", encoding="utf-8")
+    deploy(source, adapters)
+    assert not stale.exists()
+
     codex_file = home / ".codex/skills/demo/SKILL.md"
     codex_file.write_text("Edited by Codex.\n", encoding="utf-8")
     os.utime(codex_file, (2_000_000_000, 2_000_000_000))

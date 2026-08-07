@@ -83,7 +83,7 @@ def _install_selected(ctx: click.Context, repository: str, selected: list[Discov
 )
 @click.pass_context
 def main(ctx: click.Context, root: Path, home: Path) -> None:
-    """Manage skills, hooks, and prompts across coding harnesses."""
+    """Manage skills, agent files, hooks, and prompts across coding harnesses."""
     ctx.ensure_object(dict)
     ctx.obj["root"] = root.expanduser().resolve()
     ctx.obj["home"] = home.expanduser().resolve()
@@ -99,7 +99,7 @@ def init(ctx: click.Context, force: bool) -> None:
     if manifest.exists() and not force:
         raise click.ClickException(f"{manifest} already exists; pass --force to replace it")
     root.mkdir(parents=True, exist_ok=True)
-    for directory in ("skills", "hooks", "prompts"):
+    for directory in ("skills", "agents", "hooks", "prompts"):
         (root / directory).mkdir(exist_ok=True)
     manifest.write_text('[project]\nsource_dir = "skills"\n', encoding="utf-8")
     console.print(f"[green]Initialized[/] {root}")

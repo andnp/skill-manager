@@ -22,6 +22,7 @@ def test_init_and_deploy_are_scriptable(tmp_path):
 
     result = runner.invoke(main, ["--root", str(root), "init"])
     assert result.exit_code == 0, result.output
+    assert (root / "agents").is_dir()
     skill = root / "skills" / "demo"
     skill.mkdir()
     (skill / "SKILL.md").write_text("Do the thing.\n", encoding="utf-8")

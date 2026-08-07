@@ -47,6 +47,11 @@ def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = F
     """Render and deploy one skill to every selected harness."""
     results: list[Deployment] = []
     for adapter in adapters:
+        files = [
+            source
+            for source in skill.files
+            if adapter.name == "codex" or source.relative_to(skill.path) != Path("agents/openai.yaml")
+        ]
         changed = sum(
             _write_rendered(
                 source,
@@ -55,9 +60,14 @@ def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = F
                 adapter.name,
                 dry_run,
             )
-            for source in skill.files
+            for source in files
         )
-        results.append(Deployment(adapter.name, skill.name, changed, len(skill.files)))
+        metadata = adapter.destination("skill", skill.name, Path("agents/openai.yaml"))
+        if adapter.name != "codex" and metadata.is_file():
+            if not dry_run:
+                metadata.unlink()
+            changed += 1
+        results.append(Deployment(adapter.name, skill.name, changed, len(files)))
     return results
 
 

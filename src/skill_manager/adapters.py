@@ -15,6 +15,11 @@ class HarnessAdapter:
     skills_dir: Path
     hooks_dir: Path
     prompts_dir: Path
+    agent_file: Path
+
+    def agent_destination(self) -> Path:
+        """Return the global instruction file for this harness."""
+        return self.agent_file
 
     def root_for(self, kind: str) -> Path:
         """Return the destination root for a supported artifact kind."""
@@ -41,8 +46,10 @@ def default_adapters(home: Path | None = None) -> dict[str, HarnessAdapter]:
         "agy": home / ".gemini" / "config",
         "opencode": home / ".config" / "opencode",
     }
+    filenames = {name: "CLAUDE.md" if name == "claude" else "AGENTS.md" for name in roots}
     return {
-        name: HarnessAdapter(name, root / "skills", root / "hooks", root / "prompts") for name, root in roots.items()
+        name: HarnessAdapter(name, root / "skills", root / "hooks", root / "prompts", root / filenames[name])
+        for name, root in roots.items()
     }
 
 

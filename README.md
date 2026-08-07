@@ -18,6 +18,12 @@ uv run pytest
 The source repository uses `skills/<name>/` folders. Each skill can contain
 its normal files plus an optional `skill-manager.json` variable file.
 
+Agent instruction files use `agents/shared.md` plus optional harness overrides
+such as `agents/claude.md` or `agents/codex.md`. `deploy` renders the shared
+file first, appends the matching override, and writes `CLAUDE.md` for Claude or
+`AGENTS.md` for the other harnesses. Variables for these files can live in
+`agents/skill-manager.json` and use the same harness/default lookup rules.
+
 ## Commands
 
 ```bash

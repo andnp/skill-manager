@@ -1,6 +1,6 @@
 # Skill Manager
 
-`skill-manager` keeps agent skills, hooks, and prompts in one repository and
+`skill-manager` keeps agent skills, MCP servers, hooks, and prompts in one repository and
 deploys them to the coding harnesses you use every day.
 
 The CLI is intentionally local and short-lived. It will support source-first
@@ -24,11 +24,18 @@ file first, appends the matching override, and writes `CLAUDE.md` for Claude or
 `AGENTS.md` for the other harnesses. Variables for these files can live in
 `agents/skill-manager.json` and use the same harness/default lookup rules.
 
+MCP servers are defined in `mcp/servers.yaml`. The manifest owns only the
+servers it declares and preserves unrelated user configuration. Use the
+`retired` list for intentional removals, such as replacing CodeGraph with
+Repowise. Credentials should be represented by environment-variable
+references, not committed values.
+
 ## Commands
 
 ```bash
 skill-manager init
 skill-manager deploy [--skill NAME] [--harness claude] [--dry-run]
+skill-manager deploy-mcp [--harness claude] [--dry-run]
 skill-manager export NAME --repo PATH --harness claude
 skill-manager list [--harness NAME]
 skill-manager extract NAME [--harness NAME]
@@ -41,6 +48,10 @@ Use `skill-manager COMMAND --help` for complete options. `--root` selects a
 different source repository and `--home` is useful for safe previews or tests.
 The supported harness names are `claude`, `codex`, `copilot`, `agy`, and
 `opencode` (with aliases for Copilot CLI and Antigravity).
+
+`deploy-mcp` targets Claude, Codex, Copilot CLI, and Agy by default. OpenCode
+is intentionally excluded until its MCP configuration is added to the manager.
+Use `--home PATH` to preview or test against another home directory.
 
 Skills use Jinja-compatible Handlebars-style expressions such as
 `{{ my_variable }}`. Values come from `skill-manager.json` in the skill folder

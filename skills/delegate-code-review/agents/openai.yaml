@@ -1,0 +1,7 @@
+interface:
+  display_name: "Delegate Code Review"
+  short_description: "Get an independent review of risky work"
+  default_prompt: "Use $delegate-code-review to get an independent review of this substantial plan or code change."
+
+policy:
+  allow_implicit_invocation: true

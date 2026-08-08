@@ -11,6 +11,7 @@
 
 - At the start of every task, before inspecting files, planning, editing, delegating, or doing other tool work, search the memory system with a concise task-specific query.
 - Search results contain AI-generated summaries only; for every potentially useful result, read the full memory record with `read_memory` before relying on it.
+- Deduplicate search results by stable `memory_ref`/memory ID and read each memory ID at most once per conversation; if it appears again, use the content already read.
 - Read only records that are clearly relevant to the task or an active decision.
 - Record durable findings such as root causes, decisions, constraints, verified behavior, and reusable patterns; do not record routine progress or unverified guesses.
 - When a memory checkpoint reminder appears, record the thought before continuing or finishing.

@@ -8,14 +8,16 @@ from rich.console import Console
 from rich.table import Table
 
 from . import __version__
-from .adapters import ALIASES, SUPPORTED_HARNESSES, select_adapters
+from .adapters import ALIASES, MCP_HARNESSES, SUPPORTED_HARNESSES, select_adapters
 from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
+from .mcp import deploy_mcp
 from .state import load_github_sources, save_github_selection
 from .sync import deploy, export_skill, extract_skill, list_installed
 
 console = Console()
 HARNESS_CHOICES = (*SUPPORTED_HARNESSES, *ALIASES)
+MCP_HARNESS_CHOICES = (*MCP_HARNESSES, *ALIASES)
 
 
 def _adapters(ctx: click.Context, names: tuple[str, ...]):
@@ -83,7 +85,7 @@ def _install_selected(ctx: click.Context, repository: str, selected: list[Discov
 )
 @click.pass_context
 def main(ctx: click.Context, root: Path, home: Path) -> None:
-    """Manage skills, agent files, hooks, and prompts across coding harnesses."""
+    """Manage skills, MCP servers, agent files, hooks, and prompts across harnesses."""
     ctx.ensure_object(dict)
     ctx.obj["root"] = root.expanduser().resolve()
     ctx.obj["home"] = home.expanduser().resolve()
@@ -99,9 +101,9 @@ def init(ctx: click.Context, force: bool) -> None:
     if manifest.exists() and not force:
         raise click.ClickException(f"{manifest} already exists; pass --force to replace it")
     root.mkdir(parents=True, exist_ok=True)
-    for directory in ("skills", "agents", "hooks", "prompts"):
+    for directory in ("skills", "agents", "hooks", "prompts", "mcp"):
         (root / directory).mkdir(exist_ok=True)
-    manifest.write_text('[project]\nsource_dir = "skills"\n', encoding="utf-8")
+    manifest.write_text('[project]\nsource_dir = "skills"\nmcp_dir = "mcp"\n', encoding="utf-8")
     console.print(f"[green]Initialized[/] {root}")
 
 
@@ -137,6 +139,31 @@ def deploy_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[
     table.add_column("Planned", justify="right")
     for result in results:
         table.add_row(result.harness, result.skill, str(result.changed_files), str(result.planned_files))
+    console.print(table)
+
+
+@main.command(name="deploy-mcp")
+@click.option(
+    "--harness",
+    "harnesses",
+    multiple=True,
+    type=click.Choice(MCP_HARNESS_CHOICES),
+    help="Target MCP harness; repeat to select a subset.",
+)
+@click.option("--dry-run", is_flag=True, help="Show planned MCP changes without writing files.")
+@click.pass_context
+def deploy_mcp_command(ctx: click.Context, harnesses: tuple[str, ...], dry_run: bool) -> None:
+    """Merge source MCP servers into user-level harness configurations."""
+    try:
+        results = deploy_mcp(ctx.obj["root"], _adapters(ctx, harnesses or MCP_HARNESSES), dry_run)
+    except (OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    table = Table(title="MCP deployment")
+    table.add_column("Harness", style="cyan")
+    table.add_column("Path", overflow="fold")
+    table.add_column("Changed", justify="right")
+    for result in results:
+        table.add_row(result.harness, str(result.path), "yes" if result.changed else "no")
     console.print(table)
 
 

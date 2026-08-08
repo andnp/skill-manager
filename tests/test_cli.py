@@ -11,7 +11,7 @@ def test_help_documents_commands():
     result = CliRunner().invoke(main, ["--help"])
 
     assert result.exit_code == 0
-    for command in ("init", "deploy", "export", "list", "extract", "discover", "install", "update"):
+    for command in ("init", "deploy", "deploy-mcp", "export", "list", "extract", "discover", "install", "update"):
         assert command in result.output
 
 

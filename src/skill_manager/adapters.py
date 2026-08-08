@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SUPPORTED_HARNESSES = ("claude", "codex", "copilot", "agy", "opencode")
+MCP_HARNESSES = ("claude", "codex", "copilot", "agy")
 ALIASES = {"copilot-cli": "copilot", "antigravity": "agy", "antigravity-cli": "agy"}
 
 

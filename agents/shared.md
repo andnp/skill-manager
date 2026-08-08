@@ -24,6 +24,14 @@
 - Lead with the outcome. Keep responses concise, plain, and practical.
 - State what happened, what is uncertain, and what should happen next.
 
+## Coding and testing
+
+- Test behavior and contracts, not implementation details.
+- Prefer real implementations or focused fakes over heavy mocking.
+- Keep tests deterministic and cover meaningful normal, boundary, and failure cases.
+- Group tests semantically by behavior or domain.
+- Run the project's existing lint, type, and test checks when relevant.
+
 ## Exploration and documentation
 
 - For architecture, symbol, flow, caller, or impact questions, start with codegraph when its index is healthy.

@@ -10,3 +10,16 @@
 
 - Use `explorer` for read-heavy investigation, `coder` for well-scoped implementation, and `complex_coder` for ambiguous or high-risk work.
 - Assign coherent scopes that may span related commits; delegate by semantic ownership rather than commit count.
+
+## Python quality
+
+- Annotate function parameters.
+- Do not annotate return types unless necessary, readability improves materially, or repository conventions require it.
+- Avoid `Any` and `type: ignore`; prefer protocols and explicit narrowing.
+- Prefer absolute imports.
+- Do not export names from `__init__.py` unless repository conventions already use that.
+- Use self-documenting names; comments explain non-obvious reasoning only.
+- Avoid Google-style docstrings unless repository conventions already use them.
+- Avoid method/class docstrings unless complexity or public API requirements justify them.
+- For Python projects using `uv` and Ruff, run `uv run ruff check --fix`; never run `ruff format`.
+- Give every Python test a brief, multiline, human-readable docstring describing the test case.

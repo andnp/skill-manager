@@ -83,7 +83,7 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 
 ## Version control and delegation
 
-- Before executing any Git command, run `but status` to determine whether GitButler is active. Use GitButler commands only when it succeeds; otherwise use standard Git.
+- At the beginning of a conversation, run `but status` once to determine whether GitButler is active. Use GitButler commands only when it succeeds; otherwise use standard Git. Repeat the check only when the workspace state or required IDs may have changed.
 - Never add GitButler to a repository that is not already a GitButler workspace.
 - Before implementation work, read the applicable `create-commit` skill when it is available.
 - Use an explorer for read-heavy investigation, a coder for well-scoped changes, and a complex coder for ambiguous or high-risk work.

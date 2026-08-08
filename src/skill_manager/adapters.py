@@ -16,6 +16,7 @@ class HarnessAdapter:
     hooks_dir: Path
     prompts_dir: Path
     agent_file: Path
+    mcp_config_file: Path | None = None
 
     def agent_destination(self) -> Path:
         """Return the global instruction file for this harness."""
@@ -35,6 +36,10 @@ class HarnessAdapter:
             raise ValueError(f"unsafe artifact path: {relative_path}")
         return self.root_for(kind) / name / relative
 
+    def mcp_destination(self) -> Path | None:
+        """Return the user-level MCP configuration file, when supported."""
+        return self.mcp_config_file
+
 
 def default_adapters(home: Path | None = None) -> dict[str, HarnessAdapter]:
     """Build adapters using the current user's standard global locations."""
@@ -47,8 +52,21 @@ def default_adapters(home: Path | None = None) -> dict[str, HarnessAdapter]:
         "opencode": home / ".config" / "opencode",
     }
     filenames = {name: "CLAUDE.md" if name == "claude" else "AGENTS.md" for name in roots}
+    mcp_files = {
+        "claude": home / ".claude.json",
+        "codex": home / ".codex" / "config.toml",
+        "copilot": home / ".copilot" / "mcp-config.json",
+        "agy": home / ".gemini" / "config" / "mcp_config.json",
+    }
     return {
-        name: HarnessAdapter(name, root / "skills", root / "hooks", root / "prompts", root / filenames[name])
+        name: HarnessAdapter(
+            name,
+            root / "skills",
+            root / "hooks",
+            root / "prompts",
+            root / filenames[name],
+            mcp_files.get(name),
+        )
         for name, root in roots.items()
     }
 

@@ -1,0 +1,13 @@
+servers:
+  memory:
+    command: mcp-memory
+    args: [run]
+  ragdocs:
+    command: mcp-markdown-ragdocs
+    args: [mcp]
+  repowise:
+    command: repowise
+    args: [mcp]
+
+retired:
+  - codegraph

@@ -3,12 +3,15 @@
 import tomllib
 from pathlib import Path
 
-from .models import AgentSource, Skill, SourceManifest
+import yaml
+
+from .models import AgentSource, McpConfig, McpServer, Skill, SourceManifest
 
 MANIFEST_NAME = "skill-manager.toml"
 VARIABLES_NAME = "skill-manager.json"
 AGENTS_DIR = "agents"
 AGENT_SHARED_NAME = "shared.md"
+MCP_CONFIG_NAME = "servers.yaml"
 
 
 def load_manifest(root: Path) -> SourceManifest:
@@ -18,7 +21,46 @@ def load_manifest(root: Path) -> SourceManifest:
         return SourceManifest()
     with path.open("rb") as stream:
         data = tomllib.load(stream)
-    return SourceManifest(source_dir=str(data.get("project", {}).get("source_dir", "skills")))
+    project = data.get("project", {})
+    return SourceManifest(
+        source_dir=str(project.get("source_dir", "skills")),
+        mcp_dir=str(project.get("mcp_dir", "mcp")),
+    )
+
+
+def load_mcp_config(root: Path, manifest: SourceManifest | None = None) -> McpConfig:
+    """Load source MCP servers and explicit retirement entries."""
+    config = manifest or load_manifest(root)
+    path = root / config.mcp_dir / MCP_CONFIG_NAME
+    if not path.exists():
+        return McpConfig()
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    raw_servers = data.get("servers", {})
+    if not isinstance(raw_servers, dict):
+        raise ValueError(f"MCP servers must be a mapping: {path}")
+    servers: list[McpServer] = []
+    for name, raw_server in raw_servers.items():
+        if not isinstance(name, str) or not isinstance(raw_server, dict):
+            raise ValueError(f"invalid MCP server entry: {name!r}")
+        command = raw_server.get("command")
+        if not isinstance(command, str) or not command:
+            raise ValueError(f"MCP server '{name}' requires a command")
+        args = raw_server.get("args", [])
+        env = raw_server.get("env", {})
+        if not isinstance(args, list) or not all(isinstance(value, str) for value in args):
+            raise ValueError(f"MCP server '{name}' args must be a list of strings")
+        if not isinstance(env, dict) or not all(
+            isinstance(key, str) and isinstance(value, str) for key, value in env.items()
+        ):
+            raise ValueError(f"MCP server '{name}' env must be a mapping of strings")
+        cwd = raw_server.get("cwd")
+        if cwd is not None and not isinstance(cwd, str):
+            raise ValueError(f"MCP server '{name}' cwd must be a string")
+        servers.append(McpServer(name, command, tuple(args), tuple(env.items()), cwd))
+    retired = data.get("retired", [])
+    if not isinstance(retired, list) or not all(isinstance(name, str) for name in retired):
+        raise ValueError(f"MCP retired must be a list of strings: {path}")
+    return McpConfig(tuple(servers), tuple(retired))
 
 
 def _summary(path: Path) -> str:

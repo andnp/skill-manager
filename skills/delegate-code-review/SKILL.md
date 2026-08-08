@@ -1,11 +1,11 @@
 ---
 name: delegate-code-review
-description: "Implicitly use after producing a complex implementation plan, moderate-to-complex code, or high-risk code to obtain an independent review through the agy CLI with Gemini's heavy reasoning tier. Do not use this skill when the user directly asks for a review; handle that request through the normal review workflow."
+description: "Use after producing a complex implementation plan, moderate-to-complex code, or high-risk code to obtain an independent review through the agy CLI with Gemini's heavy reasoning tier. Also use when the user explicitly says to ask Gemini to review a plan, code, implementation, diff, or similar work. For other direct review requests, use the normal review workflow."
 ---
 
 # Delegate Code Review
 
-Use this skill as a second pair of eyes for work that the agent initiated. It is an escalation mechanism, not a response style for a user-requested review.
+Use this skill as a second pair of eyes for work that the agent initiated or when the user explicitly asks for Gemini's review. It is an escalation mechanism, not a response style for other user-requested reviews.
 
 ## Trigger boundary
 
@@ -14,8 +14,9 @@ Invoke implicitly when at least one of these is true:
 - The agent has produced a plan with multiple dependent steps, architectural choices, migrations, security implications, or a meaningful compatibility risk.
 - The agent has written or substantially changed moderate-to-complex code.
 - The agent has changed high-risk code: authentication, authorization, data loss or migration paths, concurrency, persistence, networking, sandboxing, secrets, deployment, or safety controls.
+- The user explicitly asks to “ask Gemini” (or equivalent) to review a plan, code, implementation, diff, or similar artifact.
 
-Do not invoke it merely because a change has multiple files, adds boilerplate, or needs ordinary lint/test cleanup. Do not invoke it for a direct user request such as “review this code” or “review my plan”; answer that request directly using the applicable review process.
+Do not invoke it merely because a change has multiple files, adds boilerplate, or needs ordinary lint/test cleanup. For direct review requests, use this skill only when the user explicitly names Gemini; otherwise use the normal review workflow.
 
 ## Workflow
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Initialize Repowise"
+  short_description: "Initialize Repowise with OpenCode and Ollama"
+  default_prompt: "Use $init-repowise to initialize this repository with OpenCode Copilot and Ollama embeddings."

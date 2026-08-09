@@ -130,26 +130,25 @@ def deploy(
     selected = [skill for skill in skills if not names or skill.name in names]
     results = [result for skill in selected for result in deploy_skill(skill, adapters, dry_run)]
     receipts: list[DeploymentReceipt] = []
-    if not names:
-        for kind in ("hook", "prompt"):
-            source_root = root / f"{kind}s"
-            if not source_root.exists():
-                continue
-            files = sorted(file for file in source_root.rglob("*") if file.is_file() and file.name != VARIABLES_NAME)
-            for adapter in adapters:
-                changed = 0
-                for source in files:
-                    destination = adapter.root_for(kind) / source.relative_to(source_root)
-                    changed += _write_rendered(source, destination, source.parent, adapter.name, dry_run)
-                if files:
-                    results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
-        agent_source = load_agent_source(root)
-        if agent_source and (agent_source.shared or agent_source.overrides):
-            for adapter in adapters:
-                changed = _write_content(
-                    render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
-                )
-                results.append(Deployment(adapter.name, "agents", int(changed), 1))
+    for kind in ("hook", "prompt"):
+        source_root = root / f"{kind}s"
+        if not source_root.exists():
+            continue
+        files = sorted(file for file in source_root.rglob("*") if file.is_file() and file.name != VARIABLES_NAME)
+        for adapter in adapters:
+            changed = 0
+            for source in files:
+                destination = adapter.root_for(kind) / source.relative_to(source_root)
+                changed += _write_rendered(source, destination, source.parent, adapter.name, dry_run)
+            if files:
+                results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
+    agent_source = load_agent_source(root)
+    if agent_source and (agent_source.shared or agent_source.overrides):
+        for adapter in adapters:
+            changed = _write_content(
+                render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
+            )
+            results.append(Deployment(adapter.name, "agents", int(changed), 1))
     if selected and not dry_run:
         for skill in selected:
             for adapter in adapters:

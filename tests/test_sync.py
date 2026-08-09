@@ -68,7 +68,26 @@ def test_deploy_writes_hash_receipts_for_selected_skills(tmp_path):
     assert len(receipt["source_hash"]) == 64
     assert len(receipt["deployed_hash"]) == 64
     assert receipt["validation"]["valid"] is True
-    assert not (home / ".claude/CLAUDE.md").exists()
+    assert (home / ".claude/hooks/notify.sh").exists()
+    assert (home / ".claude/CLAUDE.md").exists()
+
+
+def test_selected_skill_deploy_preserves_global_artifacts(tmp_path):
+    """Deploy hooks, prompts, and agents even when a skill name is selected."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    (source / "prompts").mkdir()
+    (source / "prompts" / "review.md").write_text("Review.\n", encoding="utf-8")
+    (source / "agents").mkdir()
+    (source / "agents" / "shared.md").write_text("Global.\n", encoding="utf-8")
+    adapters = select_adapters(("claude",), home=home)
+
+    deploy(source, adapters, ("demo",))
+
+    assert (home / ".claude/hooks/notify.sh").exists()
+    assert (home / ".claude/prompts/review.md").exists()
+    assert (home / ".claude/CLAUDE.md").read_text(encoding="utf-8") == "Global.\n"
 
 
 def test_deploy_writes_harness_agent_files(tmp_path):

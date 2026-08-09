@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -11,8 +12,34 @@ def test_help_documents_commands():
     result = CliRunner().invoke(main, ["--help"])
 
     assert result.exit_code == 0
-    for command in ("init", "deploy", "deploy-mcp", "export", "list", "extract", "discover", "install", "update"):
+    for command in (
+        "init",
+        "validate",
+        "deploy",
+        "deploy-mcp",
+        "export",
+        "list",
+        "extract",
+        "discover",
+        "install",
+        "update",
+    ):
         assert command in result.output
+
+
+def test_validate_emits_machine_readable_package_report(tmp_path):
+    """Report valid package hashes as JSON without changing the source tree."""
+    skill = tmp_path / "skills" / "demo"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("Do the thing.\n", encoding="utf-8")
+
+    result = CliRunner().invoke(main, ["--root", str(tmp_path), "validate"])
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["valid"] is True
+    assert payload["skills"] == ["demo"]
+    assert len(payload["source_hashes"]["demo"]) == 64
 
 
 def test_init_and_deploy_are_scriptable(tmp_path):

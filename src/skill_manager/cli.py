@@ -1,5 +1,6 @@
 """Command-line entry point for skill-manager."""
 
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from .manifest import MANIFEST_NAME, load_skills
 from .mcp import deploy_mcp
 from .state import load_github_sources, save_github_selection
 from .sync import deploy, export_skill, extract_skill, list_installed
+from .validation import validate
 
 console = Console()
 HARNESS_CHOICES = (*SUPPORTED_HARNESSES, *ALIASES)
@@ -105,6 +107,17 @@ def init(ctx: click.Context, force: bool) -> None:
         (root / directory).mkdir(exist_ok=True)
     manifest.write_text('[project]\nsource_dir = "skills"\nmcp_dir = "mcp"\n', encoding="utf-8")
     console.print(f"[green]Initialized[/] {root}")
+
+
+@main.command()
+@click.option("--skill", "names", multiple=True, help="Validate only this skill; repeat for more than one.")
+@click.pass_context
+def validate_command(ctx: click.Context, names: tuple[str, ...]) -> None:
+    """Validate source skill packages and emit a JSON report."""
+    report = validate(ctx.obj["root"], names)
+    click.echo(json.dumps(report.as_dict(), sort_keys=True))
+    if not report.valid:
+        raise click.exceptions.Exit(1)
 
 
 @main.command(name="deploy")

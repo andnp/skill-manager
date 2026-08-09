@@ -1,6 +1,8 @@
 """Deploy, inspect, and reconcile source artifacts."""
 
+import json
 import shutil
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -8,6 +10,9 @@ from .adapters import HarnessAdapter, select_adapters
 from .manifest import VARIABLES_NAME, load_agent_source, load_manifest, load_skills
 from .models import InstalledSkill, Skill
 from .rendering import render_agent_file, render_file
+from .validation import SkillValidation, package_hash, validate
+
+RECEIPT_PATH = Path(".skill-manager/deployment-receipts.json")
 
 
 @dataclass(frozen=True)
@@ -28,6 +33,28 @@ class Extraction:
     harness: str
     path: Path
     modified_at: float
+
+
+@dataclass(frozen=True)
+class DeploymentReceipt:
+    """Evidence for one successfully rendered package deployment."""
+
+    harness: str
+    skill: str
+    source_hash: str
+    deployed_hash: str
+    validation: SkillValidation
+    created_at: float
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "harness": self.harness,
+            "skill": self.skill,
+            "source_hash": self.source_hash,
+            "deployed_hash": self.deployed_hash,
+            "validation": self.validation.as_dict(),
+            "created_at": self.created_at,
+        }
 
 
 def _write_rendered(source: Path, destination: Path, skill_dir: Path, harness: str, dry_run: bool) -> bool:
@@ -91,29 +118,80 @@ def deploy(
     root: Path, adapters: list[HarnessAdapter], names: tuple[str, ...] = (), dry_run: bool = False
 ) -> list[Deployment]:
     """Deploy selected skills and flat hook/prompt trees from a source repo."""
+    source_root = root / load_manifest(root).source_dir
+    validation = (
+        validate(root, names)
+        if names or source_root.exists()
+        else SkillValidation(True, (), {}, ())
+    )
+    if not validation.valid:
+        raise ValueError("validation failed: " + "; ".join(validation.errors))
     skills = load_skills(root)
     selected = [skill for skill in skills if not names or skill.name in names]
     results = [result for skill in selected for result in deploy_skill(skill, adapters, dry_run)]
-    for kind in ("hook", "prompt"):
-        source_root = root / f"{kind}s"
-        if not source_root.exists():
-            continue
-        files = sorted(file for file in source_root.rglob("*") if file.is_file() and file.name != VARIABLES_NAME)
-        for adapter in adapters:
-            changed = 0
-            for source in files:
-                destination = adapter.root_for(kind) / source.relative_to(source_root)
-                changed += _write_rendered(source, destination, source.parent, adapter.name, dry_run)
-            if files:
-                results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
-    agent_source = load_agent_source(root)
-    if agent_source and (agent_source.shared or agent_source.overrides):
-        for adapter in adapters:
-            changed = _write_content(
-                render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
-            )
-            results.append(Deployment(adapter.name, "agents", int(changed), 1))
+    receipts: list[DeploymentReceipt] = []
+    if not names:
+        for kind in ("hook", "prompt"):
+            source_root = root / f"{kind}s"
+            if not source_root.exists():
+                continue
+            files = sorted(file for file in source_root.rglob("*") if file.is_file() and file.name != VARIABLES_NAME)
+            for adapter in adapters:
+                changed = 0
+                for source in files:
+                    destination = adapter.root_for(kind) / source.relative_to(source_root)
+                    changed += _write_rendered(source, destination, source.parent, adapter.name, dry_run)
+                if files:
+                    results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
+        agent_source = load_agent_source(root)
+        if agent_source and (agent_source.shared or agent_source.overrides):
+            for adapter in adapters:
+                changed = _write_content(
+                    render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
+                )
+                results.append(Deployment(adapter.name, "agents", int(changed), 1))
+    if selected and not dry_run:
+        for skill in selected:
+            for adapter in adapters:
+                destination = adapter.root_for("skill") / skill.name
+                receipts.append(
+                    DeploymentReceipt(
+                        adapter.name,
+                        skill.name,
+                        validation.source_hashes[skill.name],
+                        package_hash(destination),
+                        validation,
+                        time.time(),
+                    )
+                )
+        _write_receipts(root, receipts)
     return results
+
+
+def read_receipts(root: Path) -> list[dict[str, object]]:
+    """Read deployment receipts without changing the source repository."""
+    path = root / RECEIPT_PATH
+    if not path.exists():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
+        raise ValueError(f"invalid deployment receipts: {path}")
+    return payload
+
+
+def _write_receipts(root: Path, receipts: list[DeploymentReceipt]) -> None:
+    existing = read_receipts(root)
+    current = {
+        (str(item.get("harness")), str(item.get("skill"))): item
+        for item in existing
+        if item.get("harness") and item.get("skill")
+    }
+    current.update({(receipt.harness, receipt.skill): receipt.as_dict() for receipt in receipts})
+    path = root / RECEIPT_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(list(current.values()), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
 
 
 def _latest_mtime(path: Path) -> float:

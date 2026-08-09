@@ -14,7 +14,7 @@ from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
 from .mcp import deploy_mcp
 from .state import load_github_sources, save_github_selection
-from .sync import deploy, export_skill, extract_skill, list_installed
+from .sync import deploy, export_skill, extract_skill, list_installed, read_receipts
 from .validation import validate
 
 console = Console()
@@ -130,8 +130,11 @@ def validate_command(ctx: click.Context, names: tuple[str, ...]) -> None:
     help="Target harness; repeat to select a subset.",
 )
 @click.option("--dry-run", is_flag=True, help="Show planned changes without writing files.")
+@click.option("--json", "as_json", is_flag=True, help="Emit a machine-readable deployment report.")
 @click.pass_context
-def deploy_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[str, ...], dry_run: bool) -> None:
+def deploy_command(
+    ctx: click.Context, names: tuple[str, ...], harnesses: tuple[str, ...], dry_run: bool, as_json: bool
+) -> None:
     """Render and deploy source artifacts to selected harnesses."""
     root = ctx.obj["root"]
     available = {skill.name for skill in load_skills(root)}
@@ -142,6 +145,10 @@ def deploy_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[
         results = deploy(root, _adapters(ctx, harnesses), names, dry_run)
     except (OSError, ValueError) as error:
         raise click.ClickException(str(error)) from error
+    if as_json:
+        payload = {"deployments": [result.__dict__ for result in results], "receipts": read_receipts(root)}
+        click.echo(json.dumps(payload, sort_keys=True))
+        return
     if not results:
         console.print("[yellow]No source skills found.[/]")
         return

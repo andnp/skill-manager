@@ -2,7 +2,7 @@ import json
 import os
 
 from skill_manager.adapters import select_adapters
-from skill_manager.sync import deploy, extract_skill, list_installed
+from skill_manager.sync import RECEIPT_PATH, deploy, extract_skill, list_installed
 
 
 def make_source(root):
@@ -47,6 +47,28 @@ def test_deploy_lists_and_extracts_newest_skill(tmp_path):
 
     assert extracted.harness == "codex"
     assert (skill / "SKILL.md").read_text() == "Edited by Codex.\n"
+
+
+def test_deploy_writes_hash_receipts_for_selected_skills(tmp_path):
+    """Record validation and rendered hashes without deploying unrelated artifacts."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    (source / "agents").mkdir()
+    (source / "agents/shared.md").write_text("Global guidance.\n", encoding="utf-8")
+    adapters = select_adapters(("claude",), home=home)
+
+    deploy(source, adapters, ("demo",))
+
+    receipts = json.loads((source / RECEIPT_PATH).read_text(encoding="utf-8"))
+    assert len(receipts) == 1
+    receipt = receipts[0]
+    assert receipt["harness"] == "claude"
+    assert receipt["skill"] == "demo"
+    assert len(receipt["source_hash"]) == 64
+    assert len(receipt["deployed_hash"]) == 64
+    assert receipt["validation"]["valid"] is True
+    assert not (home / ".claude/CLAUDE.md").exists()
 
 
 def test_deploy_writes_harness_agent_files(tmp_path):

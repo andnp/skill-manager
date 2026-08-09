@@ -32,8 +32,16 @@ Do not invoke it merely because a change has multiple files, adds boilerplate, n
    ```
 
    Use `gemini-3.6-flash-high`, not the unsuffixed `gemini-3.6-flash`: the installed heavy model identifier is what ensures the requested reasoning tier. If `agy` rejects that identifier, inspect `agy models` and report the missing capability rather than silently using a lower tier.
-5. Read the result critically. Verify every finding against the current files, requirements, and tests. Apply only findings that are real, in scope, and consistent with settled decisions; report rejected suggestions when they would cause scope creep or contradict a constraint.
-6. If the review finds a blocking issue, fix it and rerun the narrowest relevant checks. If the review is clean, continue with normal verification and state that an independent review was run.
+   Retain the conversation ID reported by `agy`; it is needed for reliable follow-up.
+5. Continue the same external review when a second review or iteration is useful:
+
+   ```sh
+   agy --conversation "<conversation-id>" --model gemini-3.6-flash-high --effort high -p "<follow-up with the new diff, findings, or question>" --print-timeout 120
+   ```
+
+   Use the same conversation for follow-up findings, revised plans, or questions about a proposed correction. For an interactive iteration, use `-i` instead of `-p`. Use `agy --continue` only when this is definitely the most recent relevant Agy conversation; prefer `--conversation` when other Agy sessions may have run. A continuation is still an external Gemini review, not delegation to a built-in subagent.
+6. Read the result critically. Verify every finding against the current files, requirements, and tests. Apply only findings that are real, in scope, and consistent with settled decisions; report rejected suggestions when they would cause scope creep or contradict a constraint.
+7. If the review finds a blocking issue, fix it and rerun the narrowest relevant checks. If the review is clean, continue with normal verification and state that an independent review was run.
 
 ## Prompt construction
 

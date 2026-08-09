@@ -1,29 +1,31 @@
 ---
 name: delegate-code-review
-description: "Use after producing a complex implementation plan, moderate-to-complex code, or high-risk code to obtain an independent review through the agy CLI with Gemini's heavy reasoning tier. Also use when the user explicitly says to ask Gemini to review a plan, code, implementation, diff, or similar work. For other direct review requests, use the normal review workflow."
+description: "Use only to obtain an independent outside opinion through the external agy CLI with Gemini's heavy reasoning tier. Do not use it to orchestrate built-in subagents. Trigger after producing a complex implementation plan, moderate-to-complex code, or high-risk code, or when the user explicitly asks Gemini to review a plan, code, implementation, diff, or similar work. For other direct review requests, use the normal review workflow."
 ---
 
 # Delegate Code Review
 
-Use this skill as a second pair of eyes for work that the agent initiated or when the user explicitly asks for Gemini's review. It is an escalation mechanism, not a response style for other user-requested reviews.
+Use this skill only to obtain an independent outside opinion from Gemini through the external `agy` CLI. It is an advisory review mechanism, not a general delegation or subagent-orchestration mechanism.
+
+If the task calls for splitting work among the harness's built-in subagents, use the built-in subagent mechanism (or the `sub` skill) instead. Do not invoke this skill merely because another agent should do work; invoke it when an external review is useful or explicitly requested.
 
 ## Trigger boundary
 
-Invoke implicitly when at least one of these is true:
+Invoke implicitly when at least one of these is true and an outside opinion would help:
 
 - The agent has produced a plan with multiple dependent steps, architectural choices, migrations, security implications, or a meaningful compatibility risk.
 - The agent has written or substantially changed moderate-to-complex code.
 - The agent has changed high-risk code: authentication, authorization, data loss or migration paths, concurrency, persistence, networking, sandboxing, secrets, deployment, or safety controls.
 - The user explicitly asks to “ask Gemini” (or equivalent) to review a plan, code, implementation, diff, or similar artifact.
 
-Do not invoke it merely because a change has multiple files, adds boilerplate, or needs ordinary lint/test cleanup. For direct review requests, use this skill only when the user explicitly names Gemini; otherwise use the normal review workflow.
+Do not invoke it merely because a change has multiple files, adds boilerplate, needs ordinary lint/test cleanup, or should be delegated to a built-in subagent. For direct review requests, use this skill only when the user explicitly names Gemini or asks for an external reviewer; otherwise use the normal review workflow.
 
 ## Workflow
 
 1. Finish enough of the plan or implementation that a reviewer can assess a concrete artifact. Do not ask for a review of an intention that has no proposed steps, code, diff, or verification strategy.
 2. Gather only task-local context: the goal, constraints, relevant prior decisions, changed files or proposed file boundaries, the plan or diff, and checks already run. Prefer a focused diff plus the surrounding symbols over an entire repository dump.
 3. Build the prompt using the template below. State whether this is a `plan` or `implementation` review and what decisions are already settled.
-4. Run the review with the heavy installed Gemini tier:
+4. Run the external review with the heavy installed Gemini tier:
 
    ```sh
    agy --model gemini-3.6-flash-high --effort high -p "<review prompt>" --print-timeout 120

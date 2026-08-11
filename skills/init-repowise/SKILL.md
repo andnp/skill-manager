@@ -23,6 +23,7 @@ machine-wide editor and MCP configuration managed by `skill-manager`.
 Run this from the repository root:
 
 ```bash
+OLLAMA_EMBEDDING_MODEL=qwen3-embedding:0.6b \
 repowise init \
   --provider opencode \
   --model opencode/github-copilot/gpt-5.6-luna \
@@ -39,8 +40,10 @@ repowise init \
 ```
 
 The command uses the authenticated GitHub Copilot subscription through
-OpenCode for prose generation and the local Ollama `qwen3-embedding:0.6b`
-model for embeddings. Confirm the OpenCode connection and model first with
+OpenCode for prose generation and explicitly selects the local Ollama
+`qwen3-embedding:0.6b` model for embeddings. Repowise 0.39.0 otherwise
+defaults to `embeddinggemma`, which can produce HTTP 404 failures when that
+model is not installed. Confirm the OpenCode connection and model first with
 `opencode auth list` and `opencode models` if initialization fails there.
 
 Do not remove `--no-editor-setup`: the global Claude, Codex, Copilot, and Agy
@@ -50,7 +53,18 @@ current working directory when a harness starts it. The other `--no-*` flags
 avoid creating project-local agent and MCP files that would duplicate the
 global setup.
 
+Add `.repowise/` to the repository's local git exclusions file
+(`.git/info/exclude` or `$(git rev-parse --git-path info/exclude)`) if not
+already present, ensuring the generated `.repowise/` directory remains
+untracked without mutating tracked `.gitignore` files.
+
 ## Verify
+
+Record `git status --short` before initialization. Afterward, compare it with
+the post-run status so pre-existing user files are distinguishable from files
+created by Repowise. If the no-editor flags still create a new root
+`.mcp.json` or `.vscode/{extensions.json,mcp.json}`, remove only those newly
+created artifacts before claiming that setup stayed global-only.
 
 After initialization, run:
 
@@ -59,10 +73,18 @@ repowise status
 repowise doctor
 ```
 
-Confirm that `.repowise/` exists, the configured provider is OpenCode, and the
-embedder is Ollama. Treat any vector-store or provider failure reported by
+Confirm that `.repowise/` exists, `.git/info/exclude` contains `.repowise/`,
+the configured provider is OpenCode, and the embedder is Ollama. Treat any vector-store or provider failure reported by
 `doctor` as a real follow-up issue; do not claim setup is fully healthy from a
-successful process exit alone.
+successful process exit alone. If `doctor` reports vector drift or a zero
+vector count, rebuild the index with the explicitly selected model and rerun
+the checks:
+
+```bash
+OLLAMA_EMBEDDING_MODEL=qwen3-embedding:0.6b \
+repowise reindex --embedder ollama .
+repowise doctor
+```
 
 ## Maintain the index
 

@@ -46,7 +46,8 @@
 
 - Plan multi-step or risky work before editing; keep ownership and file boundaries clear.
 - Use the project's existing environment and lockfile.
-- For edited Python files in a project with `pyproject.toml`, run the relevant project lint, type, and test checks.
+- For Python projects with `pyproject.toml`, always run Ruff, Pyright, and Pyrefly against the entire repository; never spot-check individual files.
+- Run targeted tests when behavior changes.
 - Never run `ruff format`. `ruff check` and targeted autofixes are allowed.
 - Verify changes with the narrowest relevant checks, then widen verification when runtime or integration behavior is affected.
 

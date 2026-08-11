@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dead Code Removal"
+  short_description: "Remove dead code and legacy layers safely"
+  default_prompt: "Use $dead-code-removal to audit this repository for dead code, legacy shims, and unnecessary defensive layers."

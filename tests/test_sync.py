@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from skill_manager.adapters import select_adapters
 from skill_manager.sync import RECEIPT_PATH, deploy, extract_skill, list_installed
 
@@ -163,7 +165,7 @@ def test_deploy_writes_copilot_scoped_rules_only_for_copilot(tmp_path):
     (agents / "web.md").write_text(
         '---\npatterns:\n  - "**/*.js"\n  - "**/*.ts"\n---\nUse {{ model }}.\n', encoding="utf-8"
     )
-    adapters = select_adapters(("copilot", "claude", "codex", "agy", "opencode"), home=home)
+    adapters = select_adapters(("copilot", "claude", "codex", "agy"), home=home)
 
     results = deploy(source, adapters)
 
@@ -198,3 +200,112 @@ def test_deploy_dry_run_plans_copilot_scoped_rules_without_writing(tmp_path):
         ("agents/rules/web", 1, 1)
     ]
     assert not (home / ".copilot/instructions/web.instructions.md").exists()
+
+
+def test_deploy_registers_opencode_rules_and_preserves_config(tmp_path):
+    """Create OpenCode instructions while preserving existing configuration."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nUse explicit types.\n', encoding="utf-8"
+    )
+    config = home / ".config/opencode/opencode.json"
+    config.parent.mkdir(parents=True)
+    rule_path = home / ".config/opencode/skill-manager/rules/python.md"
+    config.write_text(
+        json.dumps({"theme": "dark", "instructions": ["existing", str(rule_path)]}), encoding="utf-8"
+    )
+    adapters = select_adapters(("opencode",), home=home)
+
+    results = deploy(source, adapters)
+
+    assert rule_path.read_text(encoding="utf-8") == "Use explicit types.\n"
+    saved = json.loads(config.read_text(encoding="utf-8"))
+    assert saved == {"instructions": ["existing", str(rule_path)], "theme": "dark"}
+    assert [(result.skill, result.changed_files) for result in results] == [
+        ("agents/rules/python", 1),
+        ("agents/opencode.json", 1),
+    ]
+
+
+def test_deploy_creates_opencode_config_with_new_instruction(tmp_path):
+    """Create an OpenCode config containing each generated rule path."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nUse explicit types.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("opencode",), home=home)
+
+    deploy(source, adapters)
+
+    rule_path = home / ".config/opencode/skill-manager/rules/python.md"
+    assert json.loads((home / ".config/opencode/opencode.json").read_text(encoding="utf-8")) == {
+        "instructions": [str(rule_path)]
+    }
+
+
+def test_deploy_dry_run_plans_opencode_rule_and_config_without_writing(tmp_path):
+    """Plan OpenCode rule and config deployment without creating files."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nUse explicit types.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("opencode",), home=home)
+
+    results = deploy(source, adapters, dry_run=True)
+
+    assert [(result.skill, result.changed_files, result.planned_files) for result in results] == [
+        ("agents/rules/python", 1, 1),
+        ("agents/opencode.json", 1, 1),
+    ]
+    assert not (home / ".config/opencode/skill-manager/rules/python.md").exists()
+    assert not (home / ".config/opencode/opencode.json").exists()
+
+
+def test_deploy_rejects_invalid_opencode_config(tmp_path):
+    """Reject malformed OpenCode JSON and invalid instructions values."""
+    cases = (
+        ("not json", "invalid OpenCode config JSON"),
+        (json.dumps({"instructions": {}}), "instructions must be a list"),
+    )
+    for value, message in cases:
+        source = tmp_path / message.replace(" ", "-")
+        home = source / "home"
+        rules = source / "agents" / "rules"
+        rules.mkdir(parents=True)
+        (rules / "python.md").write_text(
+            '---\npatterns: ["**/*.py"]\n---\nUse explicit types.\n', encoding="utf-8"
+        )
+        config = home / ".config/opencode/opencode.json"
+        config.parent.mkdir(parents=True)
+        config.write_text(value, encoding="utf-8")
+
+        with pytest.raises(ValueError, match=message):
+            deploy(source, select_adapters(("opencode",), home=home))
+
+
+def test_deploy_does_not_emit_opencode_rules_to_other_harnesses(tmp_path):
+    """Keep OpenCode rule files and config isolated from other harnesses."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nUse explicit types.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("claude", "copilot", "codex", "agy"), home=home)
+
+    deploy(source, adapters)
+
+    assert not (home / ".claude/skill-manager/rules/python.md").exists()
+    assert not (home / ".copilot/skill-manager/rules/python.md").exists()
+    assert not (home / ".codex/skill-manager/rules/python.md").exists()
+    assert not (home / ".gemini/config/skill-manager/rules/python.md").exists()

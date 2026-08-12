@@ -25,14 +25,22 @@ class HarnessAdapter:
 
     def agent_rule_destination(self, name: str) -> Path | None:
         """Return a native destination for one scoped agent rule."""
-        if self.name not in {"claude", "copilot"}:
+        if self.name not in {"claude", "copilot", "opencode"}:
             return None
         relative = Path(name)
         if not name or relative.is_absolute() or relative.name != name or ".." in relative.parts:
             raise ValueError(f"unsafe agent rule name: {name}")
         if self.name == "claude":
             return self.agent_file.parent / "rules" / f"{name}.md"
+        if self.name == "opencode":
+            return self.agent_file.parent / "skill-manager" / "rules" / f"{name}.md"
         return self.agent_file.parent / "instructions" / f"{name}.instructions.md"
+
+    def agent_rule_config_destination(self) -> Path | None:
+        """Return the native scoped-rule config path when supported."""
+        if self.name != "opencode":
+            return None
+        return self.agent_file.parent / "opencode.json"
 
     def root_for(self, kind: str) -> Path:
         """Return the destination root for a supported artifact kind."""

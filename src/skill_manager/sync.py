@@ -9,7 +9,7 @@ from pathlib import Path
 from .adapters import HarnessAdapter, select_adapters
 from .manifest import VARIABLES_NAME, load_agent_source, load_manifest, load_skills
 from .models import InstalledSkill, Skill
-from .rendering import render_agent_file, render_claude_rule, render_copilot_rule, render_file
+from .rendering import render_agent_file, render_agent_rule, render_claude_rule, render_copilot_rule, render_file
 from .validation import SkillValidation, package_hash, validate
 
 RECEIPT_PATH = Path(".skill-manager/deployment-receipts.json")
@@ -68,6 +68,30 @@ def _write_content(content: bytes, destination: Path, dry_run: bool) -> bool:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)
     return True
+
+
+def _write_opencode_config(destination: Path, rule_paths: list[Path], dry_run: bool) -> bool:
+    """Register generated rule paths without overwriting invalid config."""
+    if destination.exists():
+        try:
+            config = json.loads(destination.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            raise ValueError(f"invalid OpenCode config JSON: {destination}: {error}") from error
+        if not isinstance(config, dict):
+            raise ValueError(f"OpenCode config must be an object: {destination}")
+        instructions = config.get("instructions", [])
+        if not isinstance(instructions, list):
+            raise ValueError(f"OpenCode instructions must be a list: {destination}")
+    else:
+        config = {}
+        instructions = []
+    for rule_path in rule_paths:
+        path = str(rule_path)
+        if path not in instructions:
+            instructions.append(path)
+    config["instructions"] = instructions
+    content = (json.dumps(config, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    return _write_content(content, destination, dry_run)
 
 
 def _remove_stale_files(root: Path, expected: set[Path], dry_run: bool) -> int:
@@ -150,20 +174,30 @@ def deploy(
                     render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
                 )
                 results.append(Deployment(adapter.name, "agents", int(changed), 1))
-            if adapter.name in {"claude", "copilot"}:
+            if adapter.name in {"claude", "copilot", "opencode"}:
+                opencode_paths: list[Path] = []
                 for rule in agent_source.rules:
                     destination = adapter.agent_rule_destination(rule.name)
                     if destination is None:
                         continue
-                    content = (
-                        render_claude_rule(rule, agent_source.root)
-                        if adapter.name == "claude"
-                        else render_copilot_rule(rule, agent_source.root)
-                    )
+                    if adapter.name == "claude":
+                        content = render_claude_rule(rule, agent_source.root)
+                    elif adapter.name == "copilot":
+                        content = render_copilot_rule(rule, agent_source.root)
+                    else:
+                        content = render_agent_rule(rule, agent_source.root, adapter.name)
                     changed = _write_content(
                         content.encode("utf-8"), destination, dry_run
                     )
                     results.append(Deployment(adapter.name, f"agents/rules/{rule.name}", int(changed), 1))
+                    if adapter.name == "opencode":
+                        opencode_paths.append(destination)
+                if opencode_paths:
+                    config_destination = adapter.agent_rule_config_destination()
+                    if config_destination is None:
+                        raise ValueError("OpenCode adapter has no rule config destination")
+                    changed = _write_opencode_config(config_destination, opencode_paths, dry_run)
+                    results.append(Deployment(adapter.name, "agents/opencode.json", int(changed), 1))
     if selected and not dry_run:
         for skill in selected:
             for adapter in adapters:

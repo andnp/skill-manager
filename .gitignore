@@ -2,6 +2,11 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+.codex/
+.mcp.json
+.repowise/
+.skill-manager/
+.vscode/
 *.py[cod]
 dist/
 build/

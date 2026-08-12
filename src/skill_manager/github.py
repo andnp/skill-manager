@@ -119,7 +119,10 @@ def install(skill: DiscoveredSkill, root: Path, client: httpx.Client | None = No
         metadata.raise_for_status()
         branch = metadata.json()["default_branch"]
         for remote_path in skill.files:
-            relative = Path(remote_path).relative_to(skill.root) if skill.root != "." else Path(remote_path).name
+            if skill.root != ".":
+                relative = Path(remote_path).relative_to(skill.root)
+            else:
+                relative = Path(Path(remote_path).name)
             if relative.is_absolute() or ".." in relative.parts:
                 raise GitHubError(f"unsafe path in repository: {remote_path}")
             raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{quote(branch)}/{quote(remote_path)}"

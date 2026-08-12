@@ -232,6 +232,7 @@ def export_agent_rules(root: Path, destination: Path, harness: str) -> Deploymen
         )
     source = load_agent_source(root)
     rules = source.rules if source else ()
+    source_root = source.root if source else root
     if harness == "codex":
         sections: dict[Path, list[tuple[str, str]]] = {}
         for rule in rules:
@@ -253,7 +254,7 @@ def export_agent_rules(root: Path, destination: Path, harness: str) -> Deploymen
                 if ".." in path.parts:
                     raise ValueError(f"unsafe Codex rule directory: {directory}")
                 directories.add(path)
-            body = render_agent_rule(rule, source.root, harness)
+            body = render_agent_rule(rule, source_root, harness)
             for directory in directories:
                 sections.setdefault(directory, []).append((rule.name, body))
         rendered = []
@@ -273,7 +274,7 @@ def export_agent_rules(root: Path, destination: Path, harness: str) -> Deploymen
                 "globs:\n"
                 + "".join(f"  - {json.dumps(pattern)}\n" for pattern in rule.patterns)
                 + "---\n"
-                + render_agent_rule(rule, source.root, harness)
+                + render_agent_rule(rule, source_root, harness)
             ).encode("utf-8")
             rendered.append((destination / ".agents" / "rules" / f"{rule.name}.md", content))
     conflicts = [path for path, content in rendered if path.exists() and path.read_bytes() != content]

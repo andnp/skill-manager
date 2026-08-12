@@ -11,8 +11,8 @@ Your job is to be the **prompt engineer**, not the implementer. Decide whether t
 
 1. **Assess the task** — delegate only bounded, reversible work with a clear success condition. Handle ambiguous, high-risk, or judgment-heavy work yourself.
 2. **Draft the sub-agent prompt** — see format below. Think carefully: the sub-agent has no conversation context beyond what you write.
-3. **Delegate** — use the current harness's subagent mechanism. Request the `{{ subagent_model }}` model when it accepts an explicit model; otherwise use its default low-cost subagent. If no delegation mechanism is available, handle the task yourself and say so.
-4. **Review** — verify the result before using it. Report the outcome, changed files, checks run, and unresolved questions; do not apply unverified output blindly.
+3. **Delegate** — use the current harness's subagent mechanism. Request the `{{ subagent_model }}` model when it accepts an explicit model; otherwise use its default low-cost subagent. If no delegation mechanism is available, handle the task yourself and say so. When the work executes under a commit plan or scope already approved earlier in the conversation, state that explicitly in the prompt and instruct the sub-agent to implement without pausing for a new approval turn — sub-agents otherwise stop at planning checkpoints the parent has already cleared.
+4. **Review** — verify the result before using it; don't trust a completion report alone. For file or commit changes, check the actual shared workspace (`git status`/`git log` or equivalent) rather than the sub-agent's description of what it did. Report the outcome, changed files, checks run, and unresolved questions; do not apply unverified output blindly.
 
 ## Sub-agent prompt format
 

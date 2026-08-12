@@ -245,3 +245,75 @@ def test_export_agents_rejects_unsupported_harness(tmp_path):
 
     assert result.exit_code != 0
     assert "currently supports only the agy harness" in result.output
+
+
+def test_export_agents_writes_codex_directory_rules(tmp_path):
+    """Export representable Codex rules into deterministic directory AGENTS files."""
+    source = tmp_path / "source"
+    target = tmp_path / "monorepo"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (source / "agents" / "skill-manager.json").write_text(
+        json.dumps({"model": {"codex": "gpt-5", "default": "safe"}}), encoding="utf-8"
+    )
+    (rules / "zeta.md").write_text(
+        '---\npatterns: ["src/**"]\n---\nUse {{ model }}.\n', encoding="utf-8"
+    )
+    (rules / "alpha.md").write_text(
+        '---\npatterns: ["src/**/*"]\n---\nReview carefully.\n', encoding="utf-8"
+    )
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        ["--root", str(source), "export-agents", "--repo", str(target), "--harness", "codex"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (target / "src/AGENTS.md").read_text(encoding="utf-8") == (
+        "## alpha\nReview carefully.\n\n## zeta\nUse gpt-5.\n"
+    )
+
+
+def test_export_agents_rejects_codex_extension_glob(tmp_path):
+    """Reject Codex export for a pattern that cannot map to a directory."""
+    source = tmp_path / "source"
+    target = tmp_path / "monorepo"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nPython guidance.\n', encoding="utf-8"
+    )
+    target.mkdir()
+
+    result = CliRunner().invoke(
+        main,
+        ["--root", str(source), "export-agents", "--repo", str(target), "--harness", "codex"],
+    )
+
+    assert result.exit_code != 0
+    assert "Codex requires a directory-representable pattern" in result.output
+    assert not (target / "AGENTS.md").exists()
+
+
+def test_export_agents_preserves_conflicting_codex_agents_file(tmp_path):
+    """Refuse to overwrite a conflicting directory-scoped Codex file."""
+    source = tmp_path / "source"
+    target = tmp_path / "monorepo"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["src/**"]\n---\nSource guidance.\n', encoding="utf-8"
+    )
+    destination = target / "src/AGENTS.md"
+    destination.parent.mkdir(parents=True)
+    destination.write_text("Existing guidance.\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        main,
+        ["--root", str(source), "export-agents", "--repo", str(target), "--harness", "codex"],
+    )
+
+    assert result.exit_code != 0
+    assert "agent rule conflict" in result.output
+    assert destination.read_text(encoding="utf-8") == "Existing guidance.\n"

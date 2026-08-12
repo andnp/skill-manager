@@ -140,21 +140,57 @@ def export_skill(root: Path, destination: Path, name: str, harness: str) -> Depl
 
 def export_agent_rules(root: Path, destination: Path, harness: str) -> Deployment:
     """Export source agent rules into a repository-local harness layout."""
-    if harness != "agy":
-        raise ValueError("repository-local agent export currently supports only the agy harness")
+    if harness not in {"agy", "codex"}:
+        raise ValueError(
+            "repository-local agent export currently supports only the agy harness "
+            "and representable codex directories"
+        )
     source = load_agent_source(root)
     rules = source.rules if source else ()
-    rendered: list[tuple[Path, bytes]] = []
-    for rule in rules:
-        content = (
-            "---\n"
-            "trigger: glob\n"
-            "globs:\n"
-            + "".join(f"  - {json.dumps(pattern)}\n" for pattern in rule.patterns)
-            + "---\n"
-            + render_agent_rule(rule, source.root, harness)
-        ).encode("utf-8")
-        rendered.append((destination / ".agents" / "rules" / f"{rule.name}.md", content))
+    if harness == "codex":
+        sections: dict[Path, list[tuple[str, str]]] = {}
+        for rule in rules:
+            directories = set()
+            for pattern in rule.patterns:
+                if pattern.endswith("/**/*"):
+                    directory = pattern[:-5]
+                elif pattern.endswith("/**"):
+                    directory = pattern[:-3]
+                else:
+                    raise ValueError(
+                        f"Codex requires a directory-representable pattern, got: {pattern}"
+                    )
+                path = Path(directory)
+                if not directory or path.is_absolute() or any(char in directory for char in "*?[]"):
+                    raise ValueError(
+                        f"Codex requires a directory-representable pattern, got: {pattern}"
+                    )
+                if ".." in path.parts:
+                    raise ValueError(f"unsafe Codex rule directory: {directory}")
+                directories.add(path)
+            body = render_agent_rule(rule, source.root, harness)
+            for directory in directories:
+                sections.setdefault(directory, []).append((rule.name, body))
+        rendered = []
+        for directory, entries in sorted(sections.items()):
+            ordered = sorted(entries)
+            if len(ordered) == 1:
+                content = ordered[0][1]
+            else:
+                content = "\n\n".join(f"## {name}\n{body.rstrip()}" for name, body in ordered) + "\n"
+            rendered.append((destination / directory / "AGENTS.md", content.encode("utf-8")))
+    else:
+        rendered = []
+        for rule in rules:
+            content = (
+                "---\n"
+                "trigger: glob\n"
+                "globs:\n"
+                + "".join(f"  - {json.dumps(pattern)}\n" for pattern in rule.patterns)
+                + "---\n"
+                + render_agent_rule(rule, source.root, harness)
+            ).encode("utf-8")
+            rendered.append((destination / ".agents" / "rules" / f"{rule.name}.md", content))
     conflicts = [path for path, content in rendered if path.exists() and path.read_bytes() != content]
     if conflicts:
         paths = "; ".join(str(path) for path in conflicts)

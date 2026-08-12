@@ -23,6 +23,15 @@ class HarnessAdapter:
         """Return the global instruction file for this harness."""
         return self.agent_file
 
+    def agent_rule_destination(self, name: str) -> Path | None:
+        """Return a native destination for one scoped agent rule."""
+        if self.name != "claude":
+            return None
+        relative = Path(name)
+        if not name or relative.is_absolute() or relative.name != name or ".." in relative.parts:
+            raise ValueError(f"unsafe agent rule name: {name}")
+        return self.agent_file.parent / "rules" / f"{name}.md"
+
     def root_for(self, kind: str) -> Path:
         """Return the destination root for a supported artifact kind."""
         try:

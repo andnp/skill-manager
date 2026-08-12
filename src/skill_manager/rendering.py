@@ -53,6 +53,12 @@ def render_agent_rule(rule: AgentRule, source_root: Path, harness: str) -> str:
     return render_text(rule.content, source_root, harness)
 
 
+def render_claude_rule(rule: AgentRule, source_root: Path) -> str:
+    """Render one agent rule using Claude's path-scoped Markdown format."""
+    paths = "".join(f"  - {json.dumps(pattern)}\n" for pattern in rule.patterns)
+    return f"---\npaths:\n{paths}---\n{render_agent_rule(rule, source_root, 'claude')}"
+
+
 def render_agent_file(source: AgentSource, harness: str) -> bytes:
     """Compose shared and harness-specific agent Markdown."""
     files = [file for file in (source.shared, source.overrides.get(harness)) if file]

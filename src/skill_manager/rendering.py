@@ -8,7 +8,7 @@ from jinja2 import StrictUndefined, TemplateError
 from jinja2.sandbox import SandboxedEnvironment
 
 from .manifest import VARIABLES_NAME
-from .models import AgentSource
+from .models import AgentRule, AgentSource
 
 
 class VariableError(ValueError):
@@ -46,6 +46,11 @@ def render_file(path: Path, skill_dir: Path, harness: str) -> bytes:
     if b"\x00" in content:
         return content
     return render_text(content.decode("utf-8"), skill_dir, harness).encode("utf-8")
+
+
+def render_agent_rule(rule: AgentRule, source_root: Path, harness: str) -> str:
+    """Render one neutral agent rule while preserving its source patterns."""
+    return render_text(rule.content, source_root, harness)
 
 
 def render_agent_file(source: AgentSource, harness: str) -> bytes:

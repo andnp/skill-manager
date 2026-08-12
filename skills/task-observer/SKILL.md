@@ -11,11 +11,12 @@ observation store; do not create or maintain a Markdown observation log.
 
 ## Review workflow
 
-1. Search mcp-memory for open observations with `search_memory_records`:
-   - `status: "active"`
-   - `tags: ["skill-observation"]`
-   - add `skill:<name>` when reviewing one skill
-   - use a concrete query such as `"skill improvement"` or terms from the observation title
+1. Fetch the canonical open-observation ledger with `get_skill_review_ledger` first;
+   it is the authoritative, paginated snapshot of eligible observations. Use
+   `search_memory_records` (`status: "active"`, `tags: ["skill-observation"]`,
+   optionally `skill:<name>`) only for supplemental context, and validate any
+   observation found only through search against the ledger snapshot before
+   acting on it.
 2. Read only the matching records with `read_memory_record` before deciding what to change.
 3. Inspect the current skill source under `skills/` and its nearby tests or metadata.
 4. Apply an observation only when it has clear evidence, names an affected skill,
@@ -29,8 +30,11 @@ observation store; do not create or maintain a Markdown observation log.
 7. If an edit was made and checked, resolve the observation with
    `resolve_skill_observation` using `resolution: "actioned"` and a note naming
    the source change. If it is not safe, specific, or in scope, use
-   `resolution: "deferred"` with the reason. Do not resolve an observation merely
-   because it was read.
+   `resolution: "deferred"` with the reason. If the described change is already
+   present in the current skill source, use `resolution: "deferred"` with a note
+   citing the existing source location that already satisfies it, instead of
+   leaving it active for repeated no-op runs. Do not resolve an observation
+   merely because it was read.
 8. If no observation meets these rules, make no edits and report a no-op.
 
 ## Guardrails

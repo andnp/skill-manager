@@ -17,6 +17,7 @@ Use this skill to turn a feature request into a safe, reviewable implementation.
 - Read and follow the repository's commit-planning skill before writing code when one is available.
 - Test behavior and contracts rather than implementation details. Use the repository's existing test and type-checking conventions.
 - Never introduce a speculative abstraction, compatibility layer, migration, or error path without concrete task-local evidence.
+- When the feature migrates callers onto a dependency's new API, verify the API is actually published in the locked/installed version (not just present in the dependency's own working tree) before migrating consumer code.
 
 ## Workflow
 

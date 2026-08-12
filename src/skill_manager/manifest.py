@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from .models import AgentSource, McpConfig, McpServer, Skill, SourceManifest
+from .models import AgentRule, AgentSource, McpConfig, McpServer, Skill, SourceManifest
 
 MANIFEST_NAME = "skill-manager.toml"
 VARIABLES_NAME = "skill-manager.json"
@@ -99,4 +99,38 @@ def load_agent_source(root: Path) -> AgentSource | None:
     files = sorted(file for file in source_root.iterdir() if file.is_file() and file.suffix.lower() == ".md")
     shared = next((file for file in files if file.name.lower() == AGENT_SHARED_NAME), None)
     overrides = {file.stem.lower(): file for file in files if file != shared}
-    return AgentSource(source_root, shared, overrides)
+    rules_root = source_root / "rules"
+    rules = (
+        tuple(_load_agent_rule(path, rules_root) for path in sorted(rules_root.glob("*.md")))
+        if rules_root.exists()
+        else ()
+    )
+    return AgentSource(source_root, shared, overrides, rules)
+
+
+def _load_agent_rule(path: Path, rules_root: Path) -> AgentRule:
+    """Load and validate one neutral, language-scoped agent rule."""
+    resolved_path = path.resolve()
+    try:
+        resolved_path.relative_to(rules_root.resolve())
+    except ValueError as error:
+        raise ValueError(f"agent rule path escapes {rules_root}: {path}") from error
+
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        raise ValueError(f"agent rule frontmatter must start with '---': {path}")
+    metadata, separator, content = text[4:].partition("\n---\n")
+    if not separator:
+        raise ValueError(f"invalid agent rule frontmatter: {path}")
+    try:
+        data = yaml.safe_load(metadata)
+    except yaml.YAMLError as error:
+        raise ValueError(f"invalid agent rule frontmatter in {path}: {error}") from error
+    if not isinstance(data, dict):
+        raise ValueError(f"agent rule frontmatter must be a mapping: {path}")
+    patterns = data.get("patterns")
+    if not isinstance(patterns, list) or not patterns or not all(
+        isinstance(pattern, str) and pattern.strip() for pattern in patterns
+    ):
+        raise ValueError(f"agent rule patterns must be a non-empty list of non-empty strings: {path}")
+    return AgentRule(path.stem, path, tuple(patterns), content)

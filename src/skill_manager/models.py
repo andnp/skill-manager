@@ -42,12 +42,23 @@ class Skill:
 
 
 @dataclass(frozen=True)
+class AgentRule:
+    """A language-scoped agent rule from the neutral source tree."""
+
+    name: str
+    path: Path
+    patterns: tuple[str, ...]
+    content: str
+
+
+@dataclass(frozen=True)
 class AgentSource:
     """Shared and harness-specific Markdown used to build one agent file."""
 
     root: Path
     shared: Path | None
     overrides: dict[str, Path]
+    rules: tuple[AgentRule, ...] = ()
 
 
 @dataclass(frozen=True)

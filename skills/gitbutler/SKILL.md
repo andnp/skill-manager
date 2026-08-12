@@ -35,6 +35,12 @@ Its workspace state and ordinary Git commit history are not interchangeable.
 - Stack branches: `but move <branch-name-or-id> <target-branch-name-or-id>` (**branch names or branch CLI IDs**)
 - Tear off a branch: `but move <branch-name-or-id> zz` (`zz` = unassigned)
 - Push: `but push <branch-name>` — always specify the branch; never run bare `but push`.
+  For a stacked set of branches, push the topmost branch in the stack, even when only
+  a lower branch changed — pushing a lower branch alone has produced an incomplete or
+  incorrect push of that branch's own commits. Before pushing, confirm with `but status -fv`
+  or `but show <branch-id>` that the branch's lane actually contains the expected commit;
+  `but push` reads GitButler's internal branch model and can silently discard a commit
+  that was added outside it (e.g. via a linked worktree).
 - Pull: `but pull --check` then `but pull`
 
 ## Gotchas
@@ -67,6 +73,17 @@ If `but move` fails, re-run `but status -fv` and retry with exact branch names f
 3. Edit files to remove `<<<<<<<` / `=======` / `>>>>>>>` markers.
 4. `but resolve finish` — do NOT run this before editing files.
 5. Repeat for remaining conflicted commits.
+
+### Commit or pick reports success but the change doesn't persist
+
+If `but commit --changes` or `but pick` prints a success line but `but show <id>` can't
+find the commit, or `but status -fv` doesn't show it in the branch's lane, don't trust the
+success message. Try `but rub <file-or-hunk-id> <existing-commit-id>` to amend the change
+directly into an existing commit instead of creating a new one.
+
+Only use `but rub` against the **topmost** commit of a branch. Amending the tip of a
+non-topmost branch in a stack can unapply that branch's lane even though `but show`
+confirms the content landed; recover with `but undo` or `but oplog restore` if this happens.
 
 ## Git-to-But Map
 

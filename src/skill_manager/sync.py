@@ -13,6 +13,7 @@ from .rendering import render_agent_file, render_agent_rule, render_claude_rule,
 from .validation import SkillValidation, package_hash, validate
 
 RECEIPT_PATH = Path(".skill-manager/deployment-receipts.json")
+AGENT_RULE_RECEIPT_PATH = Path(".skill-manager/agent-rule-receipts.json")
 
 
 @dataclass(frozen=True)
@@ -70,8 +71,37 @@ def _write_content(content: bytes, destination: Path, dry_run: bool) -> bool:
     return True
 
 
-def _write_opencode_config(destination: Path, rule_paths: list[Path], dry_run: bool) -> bool:
+def _read_agent_rule_receipts(root: Path) -> list[dict[str, str]]:
+    """Read the owned scoped-rule paths from the previous deployment."""
+    path = root / AGENT_RULE_RECEIPT_PATH
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"invalid agent rule receipt JSON: {path}: {error}") from error
+    if not isinstance(payload, list) or not all(
+        isinstance(item, dict)
+        and isinstance(item.get("harness"), str)
+        and isinstance(item.get("path"), str)
+        for item in payload
+    ):
+        raise ValueError(f"invalid agent rule receipt: {path}")
+    return payload
+
+
+def _write_agent_rule_receipts(root: Path, records: list[dict[str, str]]) -> None:
+    path = root / AGENT_RULE_RECEIPT_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(records, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_opencode_config(
+    destination: Path, rule_paths: list[Path], stale_paths: list[Path], dry_run: bool
+) -> bool:
     """Register generated rule paths without overwriting invalid config."""
+    if not destination.exists() and not rule_paths:
+        return False
     if destination.exists():
         try:
             config = json.loads(destination.read_text(encoding="utf-8"))
@@ -89,9 +119,64 @@ def _write_opencode_config(destination: Path, rule_paths: list[Path], dry_run: b
         path = str(rule_path)
         if path not in instructions:
             instructions.append(path)
-    config["instructions"] = instructions
+    stale_values = {str(path) for path in stale_paths}
+    config["instructions"] = [path for path in instructions if path not in stale_values]
     content = (json.dumps(config, indent=2, sort_keys=True) + "\n").encode("utf-8")
     return _write_content(content, destination, dry_run)
+
+
+def _scoped_rule_root(adapter: HarnessAdapter) -> Path:
+    if adapter.name == "claude":
+        return adapter.agent_file.parent / "rules"
+    if adapter.name == "copilot":
+        return adapter.agent_file.parent / "instructions"
+    if adapter.name == "opencode":
+        return adapter.agent_file.parent / "skill-manager" / "rules"
+    raise ValueError(f"unsupported scoped-rule harness: {adapter.name}")
+
+
+def _validate_owned_rule_path(adapter: HarnessAdapter, path: Path) -> None:
+    valid_name = path.name.endswith(".instructions.md") if adapter.name == "copilot" else path.suffix == ".md"
+    if not path.is_absolute() or path.parent != _scoped_rule_root(adapter) or not valid_name:
+        raise ValueError(f"invalid agent rule receipt path for {adapter.name}: {path}")
+
+
+def _reconcile_stale_agent_rules(
+    prior: list[dict[str, str]],
+    adapters: list[HarnessAdapter],
+    expected: dict[str, list[Path]],
+    dry_run: bool,
+) -> tuple[list[Deployment], dict[str, list[Path]], list[dict[str, str]]]:
+    """Remove only recorded stale files and return updated ownership records."""
+    results: list[Deployment] = []
+    stale_by_harness: dict[str, list[Path]] = {}
+    active = {adapter.name for adapter in adapters}
+    records = [record for record in prior if record["harness"] not in active]
+    for adapter in adapters:
+        if adapter.name not in {"claude", "copilot", "opencode"}:
+            continue
+        current = {str(path) for path in expected.get(adapter.name, [])}
+        prior_paths = [
+            Path(record["path"])
+            for record in prior
+            if record["harness"] == adapter.name
+        ]
+        stale = []
+        for path in prior_paths:
+            _validate_owned_rule_path(adapter, path)
+            if str(path) not in current:
+                stale.append(path)
+        stale_by_harness[adapter.name] = stale
+        for path in stale:
+            if path.exists():
+                if not dry_run:
+                    path.unlink()
+                results.append(Deployment(adapter.name, "agents/rules cleanup", 1, 1))
+        records.extend(
+            {"harness": adapter.name, "path": str(path)}
+            for path in expected.get(adapter.name, [])
+        )
+    return results, stale_by_harness, records
 
 
 def _remove_stale_files(root: Path, expected: set[Path], dry_run: bool) -> int:
@@ -203,6 +288,7 @@ def deploy(
     root: Path, adapters: list[HarnessAdapter], names: tuple[str, ...] = (), dry_run: bool = False
 ) -> list[Deployment]:
     """Deploy selected skills and flat hook/prompt trees from a source repo."""
+    prior_agent_rules = _read_agent_rule_receipts(root)
     source_root = root / load_manifest(root).source_dir
     validation = (
         validate(root, names)
@@ -228,6 +314,7 @@ def deploy(
             if files:
                 results.append(Deployment(adapter.name, f"{kind}s", changed, len(files)))
     agent_source = load_agent_source(root)
+    expected_agent_rules: dict[str, list[Path]] = {}
     if agent_source and (agent_source.shared or agent_source.overrides or agent_source.rules):
         for adapter in adapters:
             if agent_source.shared or agent_source.overrides:
@@ -236,7 +323,6 @@ def deploy(
                 )
                 results.append(Deployment(adapter.name, "agents", int(changed), 1))
             if adapter.name in {"claude", "copilot", "opencode"}:
-                opencode_paths: list[Path] = []
                 for rule in agent_source.rules:
                     destination = adapter.agent_rule_destination(rule.name)
                     if destination is None:
@@ -251,14 +337,25 @@ def deploy(
                         content.encode("utf-8"), destination, dry_run
                     )
                     results.append(Deployment(adapter.name, f"agents/rules/{rule.name}", int(changed), 1))
-                    if adapter.name == "opencode":
-                        opencode_paths.append(destination)
-                if opencode_paths:
-                    config_destination = adapter.agent_rule_config_destination()
-                    if config_destination is None:
-                        raise ValueError("OpenCode adapter has no rule config destination")
-                    changed = _write_opencode_config(config_destination, opencode_paths, dry_run)
-                    results.append(Deployment(adapter.name, "agents/opencode.json", int(changed), 1))
+                    expected_agent_rules.setdefault(adapter.name, []).append(destination)
+    cleanup, stale_by_harness, agent_rule_records = _reconcile_stale_agent_rules(
+        prior_agent_rules, adapters, expected_agent_rules, dry_run
+    )
+    results.extend(cleanup)
+    for adapter in adapters:
+        if adapter.name != "opencode":
+            continue
+        current_paths = expected_agent_rules.get(adapter.name, [])
+        stale_paths = stale_by_harness.get(adapter.name, [])
+        if not current_paths and not stale_paths:
+            continue
+        config_destination = adapter.agent_rule_config_destination()
+        if config_destination is None:
+            raise ValueError("OpenCode adapter has no rule config destination")
+        changed = _write_opencode_config(config_destination, current_paths, stale_paths, dry_run)
+        results.append(Deployment(adapter.name, "agents/opencode.json", int(changed), 1))
+    if not dry_run and (prior_agent_rules or expected_agent_rules):
+        _write_agent_rule_receipts(root, agent_rule_records)
     if selected and not dry_run:
         for skill in selected:
             for adapter in adapters:

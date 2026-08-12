@@ -4,7 +4,7 @@ import os
 import pytest
 
 from skill_manager.adapters import select_adapters
-from skill_manager.sync import RECEIPT_PATH, deploy, extract_skill, list_installed
+from skill_manager.sync import AGENT_RULE_RECEIPT_PATH, RECEIPT_PATH, deploy, extract_skill, list_installed
 
 
 def make_source(root):
@@ -309,3 +309,105 @@ def test_deploy_does_not_emit_opencode_rules_to_other_harnesses(tmp_path):
     assert not (home / ".copilot/skill-manager/rules/python.md").exists()
     assert not (home / ".codex/skill-manager/rules/python.md").exists()
     assert not (home / ".gemini/config/skill-manager/rules/python.md").exists()
+
+
+def test_deploy_cleans_stale_claude_and_copilot_rules_only(tmp_path):
+    """Remove recorded stale rules while preserving unrelated harness files."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nPython.\n', encoding="utf-8"
+    )
+    (rules / "web.md").write_text(
+        '---\npatterns: ["**/*.js"]\n---\nWeb.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("claude", "copilot"), home=home)
+    deploy(source, adapters)
+    unrelated_claude = home / ".claude/rules/manual.md"
+    unrelated_copilot = home / ".copilot/instructions/manual.instructions.md"
+    unrelated_claude.parent.mkdir(parents=True, exist_ok=True)
+    unrelated_copilot.parent.mkdir(parents=True, exist_ok=True)
+    unrelated_claude.write_text("Manual.\n", encoding="utf-8")
+    unrelated_copilot.write_text("Manual.\n", encoding="utf-8")
+    (rules / "web.md").unlink()
+
+    deploy(source, adapters)
+
+    assert not (home / ".claude/rules/web.md").exists()
+    assert not (home / ".copilot/instructions/web.instructions.md").exists()
+    assert unrelated_claude.exists()
+    assert unrelated_copilot.exists()
+    records = json.loads((source / AGENT_RULE_RECEIPT_PATH).read_text(encoding="utf-8"))
+    assert {record["path"] for record in records} == {
+        str(home / ".claude/rules/python.md"),
+        str(home / ".copilot/instructions/python.instructions.md"),
+    }
+
+
+def test_deploy_cleans_stale_opencode_rule_and_instruction_only(tmp_path):
+    """Remove recorded OpenCode paths while preserving unrelated instructions."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nPython.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("opencode",), home=home)
+    deploy(source, adapters)
+    rule_path = home / ".config/opencode/skill-manager/rules/python.md"
+    config = home / ".config/opencode/opencode.json"
+    saved = json.loads(config.read_text(encoding="utf-8"))
+    saved["instructions"].append("user-configured.md")
+    config.write_text(json.dumps(saved), encoding="utf-8")
+    (rules / "python.md").unlink()
+
+    deploy(source, adapters)
+
+    assert not rule_path.exists()
+    assert json.loads(config.read_text(encoding="utf-8"))["instructions"] == ["user-configured.md"]
+
+
+def test_deploy_dry_run_reports_stale_cleanup_without_mutation(tmp_path):
+    """Report recorded stale cleanup without changing files or receipts."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "python.md").write_text(
+        '---\npatterns: ["**/*.py"]\n---\nPython.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("claude",), home=home)
+    deploy(source, adapters)
+    receipt = source / AGENT_RULE_RECEIPT_PATH
+    receipt_before = receipt.read_text(encoding="utf-8")
+    stale = home / ".claude/rules/python.md"
+    (rules / "python.md").unlink()
+
+    results = deploy(source, adapters, dry_run=True)
+
+    assert stale.exists()
+    assert receipt.read_text(encoding="utf-8") == receipt_before
+    assert [(result.skill, result.changed_files, result.planned_files) for result in results] == [
+        ("agents/rules cleanup", 1, 1)
+    ]
+
+
+def test_deploy_rejects_invalid_agent_rule_receipt_without_deleting(tmp_path):
+    """Reject invalid scoped-rule receipts before any cleanup occurs."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    source.mkdir()
+    receipt = source / AGENT_RULE_RECEIPT_PATH
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text("not json", encoding="utf-8")
+    stale = home / ".claude/rules/old.md"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("Old.\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="invalid agent rule receipt JSON"):
+        deploy(source, select_adapters(("claude",), home=home))
+
+    assert stale.exists()

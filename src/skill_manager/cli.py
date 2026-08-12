@@ -14,7 +14,7 @@ from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
 from .mcp import deploy_mcp
 from .state import load_github_sources, save_github_selection
-from .sync import deploy, export_skill, extract_skill, list_installed, read_receipts
+from .sync import deploy, export_agent_rules, export_skill, extract_skill, list_installed, read_receipts
 from .validation import validate
 
 console = Console()
@@ -199,6 +199,22 @@ def export_command(ctx: click.Context, name: str, repository: Path, harness: str
     except (OSError, ValueError) as error:
         raise click.ClickException(str(error)) from error
     console.print(f"[green]Exported[/] {name} → {harness} ({repository})")
+
+
+@main.command(name="export-agents")
+@click.option("--repo", "repository", required=True, type=click.Path(path_type=Path, exists=True, file_okay=False))
+@click.option("--harness", required=True, type=str)
+@click.pass_context
+def export_agents_command(ctx: click.Context, repository: Path, harness: str) -> None:
+    """Export source agent rules to a repository-local harness layout."""
+    try:
+        result = export_agent_rules(ctx.obj["root"], repository.expanduser().resolve(), harness)
+    except (OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    console.print(
+        f"[green]Exported[/] {result.planned_files} agent rule(s) → {harness} ({repository}); "
+        f"{result.changed_files} changed"
+    )
 
 
 @main.command(name="list")

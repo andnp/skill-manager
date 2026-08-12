@@ -138,6 +138,31 @@ def export_skill(root: Path, destination: Path, name: str, harness: str) -> Depl
     return deploy_skill(skill, select_adapters((harness,), home=destination))[0]
 
 
+def export_agent_rules(root: Path, destination: Path, harness: str) -> Deployment:
+    """Export source agent rules into a repository-local harness layout."""
+    if harness != "agy":
+        raise ValueError("repository-local agent export currently supports only the agy harness")
+    source = load_agent_source(root)
+    rules = source.rules if source else ()
+    rendered: list[tuple[Path, bytes]] = []
+    for rule in rules:
+        content = (
+            "---\n"
+            "trigger: glob\n"
+            "globs:\n"
+            + "".join(f"  - {json.dumps(pattern)}\n" for pattern in rule.patterns)
+            + "---\n"
+            + render_agent_rule(rule, source.root, harness)
+        ).encode("utf-8")
+        rendered.append((destination / ".agents" / "rules" / f"{rule.name}.md", content))
+    conflicts = [path for path, content in rendered if path.exists() and path.read_bytes() != content]
+    if conflicts:
+        paths = "; ".join(str(path) for path in conflicts)
+        raise ValueError(f"agent rule conflict at: {paths}")
+    changed = sum(_write_content(content, path, dry_run=False) for path, content in rendered)
+    return Deployment(harness, "agents/rules", changed, len(rendered))
+
+
 def deploy(
     root: Path, adapters: list[HarnessAdapter], names: tuple[str, ...] = (), dry_run: bool = False
 ) -> list[Deployment]:

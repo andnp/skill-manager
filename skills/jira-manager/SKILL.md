@@ -7,7 +7,17 @@ description: Use for Jira planning, searching, scoping, creating, updating, movi
 
 Coordinate Jira work with an advisory-first workflow: understand the work, search for existing issues, recommend the smallest useful shape, and present the draft before any mutation.
 
-Use `corecli jira` as the authoritative interface for Jira operations in this repo. For ticket wording and draft review, also use [create-quality-jira-ticket](../create-quality-jira-ticket/SKILL.md).
+Use `corecli jira` as the authoritative interface for Jira operations in this repo. If the
+global `corecli` entrypoint fails with a missing-dependency error, run it through the
+repository-managed environment instead (e.g. `uv run corecli jira ...` from the `corecli`
+repository).
+
+When the task moves from search/triage to proposing or filing new ticket content, switch
+to [create-quality-jira-ticket](../create-quality-jira-ticket/SKILL.md) for the actual
+drafting — do not draft titles, descriptions, or acceptance criteria yourself. Search and
+draft are separate phases with separate triggers: finishing the search phase does not cover
+the draft phase. Keep file paths, function names, and raw stack-trace text out of proposed
+ticket content unless strictly necessary for reproduction.
 
 Keep Jira focused on real planning units. Do not mirror branches, checklists, or artifact trees unless they need independent tracking.
 

@@ -26,8 +26,8 @@ file first, appends the matching override, and writes `CLAUDE.md` for Claude or
 
 MCP servers are defined in `mcp/servers.yaml`. The manifest owns only the
 servers it declares and preserves unrelated user configuration. Use the
-`retired` list for intentional removals, such as replacing CodeGraph with
-Repowise. Credentials should be represented by environment-variable
+`retired` list for intentional removals, such as removing obsolete MCP
+servers. Credentials should be represented by environment-variable
 references, not committed values.
 
 ## Commands

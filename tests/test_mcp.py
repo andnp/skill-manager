@@ -13,7 +13,7 @@ def test_render_json_configs_preserves_unmanaged_servers(tmp_path: Path):
     """Merge managed servers into JSON without discarding existing entries."""
     path = tmp_path / "mcp.json"
     path.write_text(json.dumps({"other": True, "mcpServers": {"custom": {"command": "keep"}}}), encoding="utf-8")
-    config = McpConfig((McpServer("repowise", "repowise", ("mcp",)),), ("codegraph",))
+    config = McpConfig((McpServer("repowise", "repowise", ("mcp",)),), ("legacy_server",))
 
     rendered = render_mcp_config(select_adapters(("claude",), tmp_path)[0], config, path)
     data = json.loads(rendered)
@@ -27,7 +27,7 @@ def test_render_codex_config_preserves_unmanaged_tables(tmp_path: Path):
     """Merge Codex MCP tables without replacing unrelated TOML settings."""
     path = tmp_path / "config.toml"
     path.write_text('[features]\nhooks = true\n\n[mcp_servers.custom]\ncommand = "keep"\n', encoding="utf-8")
-    config = McpConfig((McpServer("repowise", "repowise", ("mcp",)),), ("codegraph",))
+    config = McpConfig((McpServer("repowise", "repowise", ("mcp",)),), ("legacy_server",))
 
     rendered = render_mcp_config(select_adapters(("codex",), tmp_path)[0], config, path).decode()
 
@@ -50,17 +50,17 @@ def test_render_mcp_config_rejects_opencode(tmp_path: Path):
 
 
 def test_deploy_mcp_updates_selected_user_configs(tmp_path: Path):
-    """Deploy the source manifest and retire CodeGraph across all MCP targets."""
+    """Deploy the source manifest and retire legacy servers across all MCP targets."""
     source = tmp_path / "source"
     home = tmp_path / "home"
     (source / "mcp").mkdir(parents=True)
     home.mkdir()
     (source / "mcp/servers.yaml").write_text(
-        "servers:\n  repowise:\n    command: repowise\n    args: [mcp]\nretired: [codegraph]\n",
+        "servers:\n  repowise:\n    command: repowise\n    args: [mcp]\nretired: [legacy_server]\n",
         encoding="utf-8",
     )
     (home / ".claude.json").write_text(
-        json.dumps({"mcpServers": {"custom": {"command": "keep"}, "codegraph": {"command": "old"}}}),
+        json.dumps({"mcpServers": {"custom": {"command": "keep"}, "legacy_server": {"command": "old"}}}),
         encoding="utf-8",
     )
 

@@ -35,10 +35,9 @@
 
 ## Exploration and documentation
 
-- For architecture, symbol, flow, caller, or impact questions, start with codegraph when its index is healthy.
-- Use codegraph exploration, search, callers, callees, impact, node, files, and status tools according to the question.
-- Use local search and direct file reads for configuration, scripts, documentation, or when codegraph is unavailable or insufficient.
-- If codegraph reports that the repository is not initialized, run `codegraph init` from the repository root and retry.
+- For architecture, symbol, flow, caller, or impact questions, use repowise tools when available.
+- Use repowise search, context, symbol, caller, and overview tools according to the question.
+- Use local search (`rg`) and direct file reads for configuration, scripts, documentation, or when repowise is unavailable or insufficient.
 - Use the ragdocs MCP server for indexed documentation and git-history lookup when relevant; prefer document queries for documentation and git-history queries for rationale.
 - Verify retrieved context against current files.
 

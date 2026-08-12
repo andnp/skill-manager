@@ -9,5 +9,4 @@ servers:
     command: repowise
     args: [mcp]
 
-retired:
-  - codegraph
+retired: []

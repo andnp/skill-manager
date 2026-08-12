@@ -93,7 +93,9 @@ When using doubles:
 
 ### 5. Verify and maintain the suite
 
-Run the narrowest relevant test command first, then the broader project checks required by local conventions. Investigate failures rather than weakening assertions or adding retries by default. A flaky test is a defect in the testing system until its cause is understood.
+Run the narrowest relevant test command first, then the broader project checks required by local conventions. Also run each changed test file in isolation, not only as part of a combined run — module-level registries, shared fixtures, or load-order side effects can make a test pass only when another test happens to run first. Investigate failures rather than weakening assertions or adding retries by default. A flaky test is a defect in the testing system until its cause is understood.
+
+Optional or parity tests that depend on an external backend, container image, or service should detect a missing dependency and skip with an actionable reason, not initiate a network download or image pull during test execution.
 
 For larger tests, provide clear failure output, trace or diagnostic artifacts, a named owner, and a reason the test cannot be smaller. Keep the main developer workflow fast; isolate expensive suites to appropriate build, release, or scheduled stages.
 

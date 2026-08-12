@@ -17,9 +17,22 @@ availability, or an explicitly supported migration.
   worktree state before changing anything.
 - Search project memory first when memory tooling is available; read relevant
   records fully before relying on them.
+- Assume a GitHub flow branching model (short-lived feature branches with single
+  ownership; `main`/`master` is the shared integration branch). Any lint error,
+  type mismatch, broken assertion, or bug introduced anywhere within the active
+  feature branch (when on a branch other than `main`/`master`) must be absorbed
+  or corrected directly into the feature branch commit that introduced it
+  (using `git commit --amend`, `git rebase -i`, or `but absorb`). Never create
+  separate fixup commits or leave dirty correction patches for errors introduced
+  within the active feature branch.
 - Treat an owned end application differently from a published library. An
   importable module is not automatically a public contract. If all callers are
   owned, migrate them and delete the shim outright.
+- Double down against re-export and forwarding patterns. Python `__all__` lists,
+  `__init__.py` re-exports (`from .module import Symbol`), TypeScript barrel files
+  (`index.ts` re-exporting internal modules), and identity aliases are anti-patterns
+  to be eliminated. Direct all callers to import from canonical modules and
+  delete re-export wrappers outright.
 - Do not add indefinite deprecation windows, release gates, or compatibility
   aliases without concrete evidence of an external consumer, persisted-data
   requirement, daemon cross-version requirement, or rollback requirement.
@@ -32,9 +45,10 @@ Put every candidate in one evidence class:
 
 1. **Dead symbol** — no source, test, configuration, script, entry-point, or
    documented runtime caller. Delete it.
-2. **Pure forwarding code** — a re-export, identity alias, empty subclass, or
-   constructor that only forwards to the canonical implementation. Migrate
-   owned callers, then delete it.
+2. **Pure forwarding code / re-export** — a re-export (`__all__`, `__init__.py`
+   forwarding, barrel re-export), identity alias, empty subclass, or constructor
+   that only forwards to the canonical implementation. Migrate owned callers to
+   import directly from the canonical definition module, then delete the re-export.
 3. **Owned compatibility layer** — callers still exist, but every caller is in
    the repository and the application owns the cutover. Migrate callers in a
    small slice, verify behavior, then delete the layer.
@@ -49,6 +63,21 @@ Put every candidate in one evidence class:
 
 Names are clues, not evidence. A function named `fallback` may be essential;
 a function with an ordinary name may be a dead adapter.
+
+## Automated language-specific tools
+
+Use language-specific dead code tools to generate candidate lists for the evidence ledger. Automated tools accelerate discovery but require verification against dynamic access, plugin mechanisms, or entry points before deletion.
+
+### Python
+- `uv tool run deadcode .` — Scans Python AST to detect uncalled functions, classes, and variables.
+- `uv tool run vulture .` — Static analysis for unused Python code with confidence scoring.
+- `uv run ruff check --select F401,F841 .` — Fast linting for unused imports (`F401`) and unused local variables (`F841`).
+
+### TypeScript / JavaScript
+- `npx knip` — Scans for unused files, unused exports, unused types, unused dependencies, and circular references.
+- `npx ts-prune` — Identifies unused `export` statements in TypeScript projects.
+
+*(Expandable for additional languages like Rust, C++, Go as tools are adopted.)*
 
 ## Workflow
 
@@ -73,7 +102,7 @@ For each candidate, record:
 | Candidate | Kind | Callers | Canonical replacement | Protected behavior | Decision |
 | --- | --- | --- | --- | --- | --- |
 
-Use `rg`/`rg --files` first. Use codegraph or an equivalent symbol/caller tool
+Use `rg`/`rg --files` first. Use `repowise` or an equivalent symbol/caller tool
 when available for architecture questions, then verify findings against files.
 Search names, import paths, constructor calls, string registrations, config
 keys, and serialized field names. A zero textual match is not enough when
@@ -82,10 +111,16 @@ reflection or plugin discovery exists.
 Useful starting searches include:
 
 ```bash
-rg -n '(compat|compatib|legacy|deprecated|shim|facade|adapter|wrapper|alias|fallback)' src tests
+rg -n '(compat|compatib|legacy|deprecated|shim|facade|adapter|wrapper|alias|fallback)' .
 rg -n '__all__|entry_points|import_module|getattr\(|hasattr\(|register|plugin' .
-rg -n 'from .* import \*|^\s*[A-Za-z_][A-Za-z0-9_]*\s*=\s*[A-Za-z_][A-Za-z0-9_.]*$' src
+rg -n 'from .* import \*|^\s*[A-Za-z_][A-Za-z0-9_]*\s*=\s*[A-Za-z_][A-Za-z0-9_.]*$' .
 ```
+
+When removing a root package export, search both import forms before deleting: a zero-match
+scan for `from pkg import Symbol` misses `from parent import pkg` followed by
+`pkg.Symbol` attribute access elsewhere. Grep for `import pkg` / `from parent import pkg`
+alongside the named-symbol search, and confirm with the full test suite, not just an exact
+reference scan.
 
 ### 3. Plan atomic commits
 
@@ -96,24 +131,24 @@ together to remain buildable and bisect-safe.
 
 Use this order:
 
-1. remove zero-caller aliases and dead exports;
-2. migrate callers from pure forwarding modules;
-3. delete the forwarding modules;
+1. remove zero-caller aliases, dead exports, and `__all__` re-exports;
+2. migrate callers from pure forwarding modules and `__init__.py` barrel exports directly to canonical modules;
+3. delete the forwarding modules and re-export statements;
 4. lock behavior with focused contract or parity tests;
 5. migrate callers from behavior-bearing facades;
 6. delete the old implementation after a zero-caller scan.
 
-Do not mix unrelated cleanup into a migration commit. Do not create a fixup
-commit for lint or type errors introduced by your own change; correct the
-originating commit.
+Do not mix unrelated cleanup into a migration commit. Any lint or type error
+introduced within the active feature branch must be absorbed into the branch
+commit that introduced it rather than creating a separate fixup commit.
 
 ### 4. Remove literal dead code
 
 For zero-caller symbols and pure forwarding modules:
 
 - delete the symbol or module rather than adding a replacement shim;
-- remove stale exports and compatibility-only tests;
-- migrate tests to canonical names when they still cover real behavior;
+- remove stale exports, `__all__` declarations, and compatibility-only tests;
+- migrate tests to canonical names and direct module imports when they still cover real behavior;
 - rerun an exact import/reference scan;
 - run focused tests, lint, and type checks before continuing.
 
@@ -181,6 +216,6 @@ uncertainty about dynamic or external consumers.
 ## Completion standard
 
 Finish with a smaller canonical path, not a renamed compatibility layer. The
-repository should have no stale exports, dead tests, or comments claiming a
-removed compatibility contract. If a candidate remains, state its evidence
-class and the concrete condition required to delete it later.
+repository should have no stale exports, re-export shims (`__all__`/`__init__.py` forwarding),
+dead tests, or comments claiming a removed compatibility contract. If a candidate remains,
+state its evidence class and the concrete condition required to delete it later.

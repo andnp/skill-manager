@@ -149,3 +149,52 @@ def test_deploy_dry_run_plans_claude_scoped_rules_without_writing(tmp_path):
         ("agents/rules/python", 1, 1)
     ]
     assert not (home / ".claude/rules/python.md").exists()
+
+
+def test_deploy_writes_copilot_scoped_rules_only_for_copilot(tmp_path):
+    """Deploy Copilot applyTo rules without emitting them to other harnesses."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    agents = source / "agents" / "rules"
+    agents.mkdir(parents=True)
+    (source / "agents" / "skill-manager.json").write_text(
+        json.dumps({"model": {"copilot": "gpt-4", "default": "safe"}}), encoding="utf-8"
+    )
+    (agents / "web.md").write_text(
+        '---\npatterns:\n  - "**/*.js"\n  - "**/*.ts"\n---\nUse {{ model }}.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("copilot", "claude", "codex", "agy", "opencode"), home=home)
+
+    results = deploy(source, adapters)
+
+    rule = home / ".copilot/instructions/web.instructions.md"
+    assert rule.read_text(encoding="utf-8") == (
+        '---\napplyTo: "**/*.js,**/*.ts"\n---\nUse gpt-4.\n'
+    )
+    assert not (home / ".claude/instructions/web.instructions.md").exists()
+    assert not (home / ".codex/instructions/web.instructions.md").exists()
+    assert not (home / ".gemini/config/instructions/web.instructions.md").exists()
+    assert not (home / ".config/opencode/instructions/web.instructions.md").exists()
+    assert [(result.harness, result.skill) for result in results] == [
+        ("copilot", "agents/rules/web"),
+        ("claude", "agents/rules/web"),
+    ]
+
+
+def test_deploy_dry_run_plans_copilot_scoped_rules_without_writing(tmp_path):
+    """Plan Copilot scoped-rule deployment without creating destination files."""
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    rules = source / "agents" / "rules"
+    rules.mkdir(parents=True)
+    (rules / "web.md").write_text(
+        '---\npatterns: ["**/*.js"]\n---\nUse explicit types.\n', encoding="utf-8"
+    )
+    adapters = select_adapters(("copilot",), home=home)
+
+    results = deploy(source, adapters, dry_run=True)
+
+    assert [(result.skill, result.changed_files, result.planned_files) for result in results] == [
+        ("agents/rules/web", 1, 1)
+    ]
+    assert not (home / ".copilot/instructions/web.instructions.md").exists()

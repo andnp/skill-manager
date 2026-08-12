@@ -59,6 +59,12 @@ def render_claude_rule(rule: AgentRule, source_root: Path) -> str:
     return f"---\npaths:\n{paths}---\n{render_agent_rule(rule, source_root, 'claude')}"
 
 
+def render_copilot_rule(rule: AgentRule, source_root: Path) -> str:
+    """Render one agent rule using Copilot's path-scoped Markdown format."""
+    apply_to = json.dumps(",".join(rule.patterns))
+    return f"---\napplyTo: {apply_to}\n---\n{render_agent_rule(rule, source_root, 'copilot')}"
+
+
 def render_agent_file(source: AgentSource, harness: str) -> bytes:
     """Compose shared and harness-specific agent Markdown."""
     files = [file for file in (source.shared, source.overrides.get(harness)) if file]

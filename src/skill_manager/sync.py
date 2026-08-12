@@ -9,7 +9,7 @@ from pathlib import Path
 from .adapters import HarnessAdapter, select_adapters
 from .manifest import VARIABLES_NAME, load_agent_source, load_manifest, load_skills
 from .models import InstalledSkill, Skill
-from .rendering import render_agent_file, render_claude_rule, render_file
+from .rendering import render_agent_file, render_claude_rule, render_copilot_rule, render_file
 from .validation import SkillValidation, package_hash, validate
 
 RECEIPT_PATH = Path(".skill-manager/deployment-receipts.json")
@@ -150,13 +150,18 @@ def deploy(
                     render_agent_file(agent_source, adapter.name), adapter.agent_destination(), dry_run
                 )
                 results.append(Deployment(adapter.name, "agents", int(changed), 1))
-            if adapter.name == "claude":
+            if adapter.name in {"claude", "copilot"}:
                 for rule in agent_source.rules:
                     destination = adapter.agent_rule_destination(rule.name)
                     if destination is None:
                         continue
+                    content = (
+                        render_claude_rule(rule, agent_source.root)
+                        if adapter.name == "claude"
+                        else render_copilot_rule(rule, agent_source.root)
+                    )
                     changed = _write_content(
-                        render_claude_rule(rule, agent_source.root).encode("utf-8"), destination, dry_run
+                        content.encode("utf-8"), destination, dry_run
                     )
                     results.append(Deployment(adapter.name, f"agents/rules/{rule.name}", int(changed), 1))
     if selected and not dry_run:

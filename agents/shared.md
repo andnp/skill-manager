@@ -25,6 +25,14 @@
 - Lead with the outcome. Keep responses concise, plain, and practical.
 - State what happened, what is uncertain, and what should happen next.
 
+## Canonical replacements
+
+- When changing a feature, replace the superseded implementation with one canonical path and remove the old code, callers, tests, configuration, and compatibility scaffolding in the same change whenever they are owned by the repository.
+- Do not keep old and new implementations live in parallel. Treat shadow mode, dual reads or writes, fallback logic, legacy paths, compatibility layers, aliases, deprecation wrappers, feature-flagged duplicate paths, and phased-rollout machinery as prohibited by default.
+- Build those mechanisms only when the user explicitly asks for a smooth rollout, fallback behavior, backward compatibility, a phased rollout, or equivalent migration support.
+- If the user explicitly requests rollout support, keep it narrowly scoped, document the protected boundary and removal condition, and do not allow the temporary path to become indefinite.
+- During review, treat any unrequested parallel implementation or legacy path as a defect that must be removed before completion.
+
 ## Coding and testing
 
 - Test behavior and contracts, not implementation details.

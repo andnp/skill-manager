@@ -28,17 +28,17 @@ Do not invoke it merely because a change has multiple files, adds boilerplate, n
 4. Run the external review with the heavy installed Gemini tier:
 
    ```sh
-   agy --model gemini-3.6-flash-high --effort high -p "<review prompt>" --print-timeout 120s
+   agy --model gemini-3.6-flash-high --effort high -p "<review prompt>" --print-timeout 600s
    ```
 
-   `--print-timeout` requires a unit-suffixed duration (`120s`); a bare number is rejected.
+   `--print-timeout` uses a 10-minute default (`600s`) and requires a unit-suffixed duration; a bare number is rejected.
    Use `gemini-3.6-flash-high`, not the unsuffixed `gemini-3.6-flash`: the installed heavy model identifier is what ensures the requested reasoning tier. If `agy` rejects that identifier, inspect `agy models` and report the missing capability rather than silently using a lower tier.
    If headless mode denies a repository-read tool because it cannot prompt for command permission, rerun with an explicitly approved headless permission mode (e.g. `--dangerously-skip-permissions`) for a read-only review, or fall back to an evidence-only prompt that requires no tool use — never silently downgrade the model or skip the review.
    Retain the conversation ID reported by `agy`; it is needed for reliable follow-up.
 5. Continue the same external review when a second review or iteration is useful:
 
    ```sh
-   agy --conversation "<conversation-id>" --model gemini-3.6-flash-high --effort high -p "<follow-up with the new diff, findings, or question>" --print-timeout 120s
+   agy --conversation "<conversation-id>" --model gemini-3.6-flash-high --effort high -p "<follow-up with the new diff, findings, or question>" --print-timeout 600s
    ```
 
    Use the same conversation for follow-up findings, revised plans, or questions about a proposed correction. For an interactive iteration, use `-i` instead of `-p`. Use `agy --continue` only when this is definitely the most recent relevant Agy conversation; prefer `--conversation` when other Agy sessions may have run. A continuation is still an external Gemini review, not delegation to a built-in subagent.

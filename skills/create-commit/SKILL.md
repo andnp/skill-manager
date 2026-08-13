@@ -10,13 +10,13 @@ Plan first. Implement one commit at a time. Never start coding before the plan i
 ## Workflow
 
 1. **Understand** — ask clarifying questions until the scope is unambiguous; don't plan against a fuzzy requirement
-2. **Propose a commit sequence** — present a numbered list (see format below), including an estimated changed-line count for every commit; invite feedback and iterate until Andy approves
+2. **Propose a commit sequence** — for plans with multiple commits, present a numbered list (see format below), including an estimated changed-line count for every commit; invite feedback and iterate until Andy approves. If the plan contains exactly one commit and the scope is unambiguous, do not ask for approval; execute it immediately.
 3. **Implement commit N** — write only the code for that commit, nothing more
 4. **Commit** — stage, write the message, create the commit
 5. **Repeat** steps 3–4 for each remaining commit in the plan
 6. **Request review** — "ready for your review" once all commits are done; stop and wait
 
-Never implement before the plan is agreed. Never implement two commits' worth of work at once.
+Never implement a multi-commit plan before it is agreed. Never implement two commits' worth of work at once.
 
 Default each commit to no more than about 20 changed lines, counting additions and
 deletions. If a planned slice is larger, split it into independently valid slices
@@ -78,7 +78,7 @@ Body is almost always required; omit only when the subject line is entirely self
 
 ## Anti-Patterns
 
-- Never start implementing before the plan is approved
+- Never start implementing a multi-commit plan before the plan is approved
 - Never write two commits' worth of changes then try to split after — revert and replay instead
 - Never put "how" in the commit body (belongs in code comments)
 - Fix linting/type errors introduced on an active feature branch by absorbing them into the commit that introduced them (via `git commit --amend`, `git rebase -i`, or `but absorb`), rather than stacking fixup commits

@@ -1,5 +1,5 @@
 interface:
   display_name: "Write Good Tests"
   short_description: "Design valuable, reliable tests at any level"
-  default_prompt: "Use $write-good-tests whenever you write or revise unit, integration, or end-to-end tests."
+  default_prompt: "Use $write-good-tests before writing or modifying any software test or test-supporting code."
   brand_color: "#2563EB"

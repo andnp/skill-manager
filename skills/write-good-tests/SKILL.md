@@ -1,6 +1,6 @@
 ---
 name: write-good-tests
-description: Use whenever you write, modify, review, or plan software tests of any kind, including unit, component, integration, contract, acceptance, end-to-end, performance, security, and exploratory tests. Apply the testing principles in this skill to choose test boundaries, generate meaningful cases, avoid brittle implementation-coupled tests, and verify the resulting suite.
+description: "MANDATORY: Use this skill before writing or modifying any software test or test-supporting code—even a single assertion, fixture, helper, test configuration, snapshot, or test data change. Also use it when reviewing or planning tests of any kind, including unit, component, integration, contract, acceptance, end-to-end, performance, security, and exploratory tests. Apply the testing principles in this skill to choose test boundaries, generate meaningful cases, avoid brittle implementation-coupled tests, and verify the resulting suite."
 ---
 
 # Write Good Tests

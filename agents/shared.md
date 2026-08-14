@@ -95,6 +95,7 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 - At the beginning of a conversation, run `but status` once to determine whether GitButler is active. Use GitButler commands only when it succeeds; otherwise use standard Git. Repeat the check only when the workspace state or required IDs may have changed.
 - Never add GitButler to a repository that is not already a GitButler workspace.
 - Before implementation work, read the applicable `create-commit` skill when it is available.
+- Typically prefer delegating well-scoped coding and implementation tasks to cheaper subagents; reserve more capable agents for ambiguous or higher-risk work.
 - Use an explorer for read-heavy investigation, a coder for well-scoped changes, and a complex coder for ambiguous or high-risk work.
 - Delegate independent read-heavy work in parallel when useful, but never have multiple agents edit the same files concurrently.
 - The main agent owns requirements, final decisions, integration, and final verification.

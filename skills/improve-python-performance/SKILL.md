@@ -1,6 +1,6 @@
 ---
 name: improve-python-performance
-description: "Profile, benchmark, and optimize Python and accelerated ML (NumPy/JAX/XLA) applications. Use when diagnosing latency bottlenecks, throughput drops, memory bloat, high CPU/GPU idle time, JIT recompilation churn, or host-device transfer overhead."
+description: "Profile, benchmark, and optimize Python, NumPy, JAX/XLA, and PyTorch applications. Use when diagnosing performance regressions, latency or throughput problems, memory bloat, CPU/GPU idle time, JIT recompilation churn, or host/device transfer stalls."
 ---
 
 # Improve Python Performance

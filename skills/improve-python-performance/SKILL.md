@@ -94,3 +94,5 @@ speculative optimizations out of the experiment.
   uncertainty.
 - Keep the change only when it produces a meaningful improvement without an
   unacceptable regression in another required metric.
+- Keep the benchmark committed and runnable, and add it to regression tracking
+  when the workload matters enough to protect.

@@ -60,12 +60,21 @@ Determine whether evidence points to host execution, allocation or memory
 pressure, synchronization or data transfer, accelerator execution, or off-CPU
 waiting. State the evidence and a testable optimization hypothesis.
 
-### 5. Change one variable
+### 5. Survey candidate optimizations
+
+Enumerate every candidate the profile supports before choosing one. Aggregate
+repeated low-level patterns across call sites — data copies, redundant
+serialization, per-item dispatch — because a diffuse pattern can outrank any
+single hotspot without appearing hot anywhere. Ask whether the evidence points
+to a structural cause such as data flow, batching, or architecture rather than
+a local fix.
+
+### 6. Change one variable
 
 Make the smallest change that tests the hypothesis. Keep unrelated cleanup and
 speculative optimizations out of the experiment.
 
-### 6. Verify
+### 7. Verify
 
 - Run the relevant behavioral and contract tests.
 - Compare outputs using workload-appropriate correctness and numerical checks.

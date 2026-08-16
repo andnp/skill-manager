@@ -60,6 +60,12 @@ Determine whether evidence points to host execution, allocation or memory
 pressure, synchronization or data transfer, accelerator execution, or off-CPU
 waiting. State the evidence and a testable optimization hypothesis.
 
+Check algorithmic scaling before accepting a resource-level explanation:
+measure the workload at two or three input sizes and treat superlinear growth
+as evidence of excess work — an O(n²) loop, a linear scan that should be a set
+or dict lookup, repeated recomputation of an invariant — rather than of a slow
+resource.
+
 ### 5. Survey candidate optimizations
 
 Enumerate every candidate the profile supports before choosing one. Aggregate

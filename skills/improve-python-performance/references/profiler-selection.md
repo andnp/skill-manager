@@ -11,6 +11,7 @@ the evidence identifies.
 | `cProfile` | Deterministic call instrumentation | Call counts and cumulative Python execution time | Call overhead can distort small, frequently called functions |
 | `line_profiler` | Line instrumentation | Statements inside an already identified hotspot | High overhead and narrow scope |
 | `jax.profiler` | Accelerator tracing | Host/device transfers, compiled operations, and stream activity | Traces can be large and require a compatible viewer |
+| `nvidia-smi` / Nsight Systems | GPU utilization and system tracing | Confirming accelerator idleness, kernel gaps, and transfer activity | Little Python-level attribution without added annotation |
 
 ## Profiling sequence
 
@@ -26,7 +27,8 @@ the evidence identifies.
 Use non-round sampling frequencies such as 99 Hz or 199 Hz when periodic work
 could synchronize with the sampler. Inspect blocked stacks or system scheduler
 traces when the workload is waiting on I/O, locks, subprocesses, or accelerator
-completion.
+completion. Use `py-spy dump` to snapshot the thread stacks of a hung or
+deadlocked process.
 
 Always confirm profiler findings with unprofiled end-to-end measurements.
 
@@ -35,7 +37,11 @@ Always confirm profiler findings with unprofiled end-to-end measurements.
 ```bash
 py-spy record -o profile.svg --rate 199 --pid <PID>
 py-spy record -o profile.svg -- python main.py
+py-spy dump --pid <PID>
+
+scalene main.py
 
 memray run -o mem_trace.bin main.py
 memray flamegraph mem_trace.bin
+memray flamegraph --leaks mem_trace.bin
 ```

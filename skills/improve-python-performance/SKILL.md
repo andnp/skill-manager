@@ -33,7 +33,12 @@ evidence from a reproducible workload.
 
 ### 2. Establish a baseline
 
-- Automate the benchmark where practical.
+- Automate the benchmark where practical, for example with `pytest-benchmark`
+  for functions or `hyperfine` for commands. Avoid ad-hoc `timeit` micro-loops
+  that measure an unrepresentative fragment of the workload.
+- Control machine-state variance before trusting small differences: CPU
+  frequency scaling, thermal throttling, and competing load can outweigh the
+  effect being measured.
 - Record cold-start and steady-state behavior separately when compilation,
   caching, or initialization is involved.
 - Capture enough repetitions to expose variance and relevant latency

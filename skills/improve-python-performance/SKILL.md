@@ -69,6 +69,11 @@ single hotspot without appearing hot anywhere. Ask whether the evidence points
 to a structural cause such as data flow, batching, or architecture rather than
 a local fix.
 
+Present the candidates as a short table — candidate, evidence, bounded impact,
+effort, risk — and let the user select the target. Bound each impact estimate
+by the profile fraction the candidate touches: eliminating a region that is
+40% of runtime caps the speedup at 1.67x.
+
 ### 6. Change one variable
 
 Make the smallest change that tests the hypothesis. Keep unrelated cleanup and

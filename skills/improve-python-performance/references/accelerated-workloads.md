@@ -1,6 +1,6 @@
 # Accelerated Workloads
 
-Use this guidance for JAX, XLA, PyTorch, and GPU- or TPU-backed workloads after
+Use this guidance for JAX, XLA, and GPU- or TPU-backed workloads after
 establishing a representative baseline.
 
 ## Separate compilation from execution

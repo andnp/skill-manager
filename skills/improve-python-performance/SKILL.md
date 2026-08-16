@@ -1,6 +1,6 @@
 ---
 name: improve-python-performance
-description: "Profile, benchmark, and optimize Python, NumPy, JAX/XLA, and PyTorch applications. Use when diagnosing performance regressions, latency or throughput problems, memory bloat, CPU/GPU idle time, JIT recompilation churn, or host/device transfer stalls."
+description: "Profile, benchmark, and optimize Python, NumPy, and JAX/XLA applications. Use when diagnosing performance regressions, latency or throughput problems, memory bloat, CPU/GPU idle time, JIT recompilation churn, or host/device transfer stalls."
 ---
 
 # Improve Python Performance
@@ -46,7 +46,7 @@ line-level, or accelerator traces only after identifying the relevant resource
 or code region. Read [profiler-selection.md](references/profiler-selection.md)
 when choosing or operating a profiler.
 
-For JAX, XLA, PyTorch, or accelerator-backed workloads, also read
+For JAX, XLA, or accelerator-backed workloads, also read
 [accelerated-workloads.md](references/accelerated-workloads.md).
 
 ### 4. Classify the bottleneck

@@ -43,11 +43,11 @@
 
 ## Exploration and documentation
 
-- For architecture, symbol, flow, caller, or impact questions, use repowise tools when available.
-- Use repowise search, context, symbol, caller, and overview tools according to the question.
-- Use local search (`rg`) and direct file reads for configuration, scripts, documentation, or when repowise is unavailable or insufficient.
-- Use the ragdocs MCP server for indexed documentation and git-history lookup when relevant; prefer document queries for documentation and git-history queries for rationale.
-- Verify retrieved context against current files.
+- For architecture, symbol, flow, caller, or impact questions, use repowise tools when available (search, context, symbol, caller, overview).
+- For all documentation discovery, architecture background, and conceptual lookups across indexed docsets, always use the `ragdocs` MCP server as the primary path (`query_documents` or `search_with_hypothesis`). Refer to the `document-search` skill when available.
+- For git commit rationale, historical context, or diff search, always use `ragdocs` (`search_git_history`).
+- Use local search (`rg`) and direct file reads only for configuration, scripts, non-indexed files, or when repowise/ragdocs are unavailable or return insufficient matches.
+- Always verify retrieved context against current files.
 
 ## Changes and verification
 

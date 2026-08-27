@@ -1,0 +1,7 @@
+interface:
+  display_name: "Delegate to Codex"
+  short_description: "Hand an implementation task to the Codex CLI"
+  default_prompt: "Use $delegate-to-codex to delegate this implementation task to the Codex CLI, then verify the result."
+
+policy:
+  allow_implicit_invocation: false

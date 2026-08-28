@@ -27,6 +27,20 @@ class Deployment:
 
 
 @dataclass(frozen=True)
+class FileComparison:
+    """One source file's rendered content measured against its deployed copy."""
+
+    path: Path
+    destination: Path
+    rendered: bytes | None
+    deployed: bytes | None
+
+    @property
+    def changed(self) -> bool:
+        return self.rendered != self.deployed
+
+
+@dataclass(frozen=True)
 class Extraction:
     """The deployed version selected as the source-of-truth update."""
 
@@ -189,29 +203,45 @@ def _remove_stale_files(root: Path, expected: set[Path], dry_run: bool) -> int:
     return len(stale)
 
 
+def _deployable_files(skill: Skill, adapter: HarnessAdapter) -> list[Path]:
+    return [
+        source
+        for source in skill.files
+        if adapter.name == "codex" or source.relative_to(skill.path) != Path("agents/openai.yaml")
+    ]
+
+
+def compare_skill(skill: Skill, adapter: HarnessAdapter) -> list[FileComparison]:
+    """Measure one skill's rendered files against their deployed copies."""
+    comparisons: list[FileComparison] = []
+    for source in _deployable_files(skill, adapter):
+        relative = source.relative_to(skill.path)
+        destination = adapter.destination("skill", skill.name, relative)
+        comparisons.append(
+            FileComparison(
+                relative,
+                destination,
+                render_file(source, skill.path, adapter.name),
+                destination.read_bytes() if destination.is_file() else None,
+            )
+        )
+    return comparisons
+
+
 def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = False) -> list[Deployment]:
     """Render and deploy one skill to every selected harness."""
     results: list[Deployment] = []
     for adapter in adapters:
-        files = [
-            source
-            for source in skill.files
-            if adapter.name == "codex" or source.relative_to(skill.path) != Path("agents/openai.yaml")
-        ]
+        comparisons = compare_skill(skill, adapter)
         changed = sum(
-            _write_rendered(
-                source,
-                adapter.destination("skill", skill.name, source.relative_to(skill.path)),
-                skill.path,
-                adapter.name,
-                dry_run,
-            )
-            for source in files
+            _write_content(comparison.rendered, comparison.destination, dry_run)
+            for comparison in comparisons
+            if comparison.rendered is not None
         )
         destination_root = adapter.root_for("skill") / skill.name
-        expected = {source.relative_to(skill.path) for source in files}
+        expected = {comparison.path for comparison in comparisons}
         changed += _remove_stale_files(destination_root, expected, dry_run)
-        results.append(Deployment(adapter.name, skill.name, changed, len(files)))
+        results.append(Deployment(adapter.name, skill.name, changed, len(comparisons)))
     return results
 
 

@@ -1,5 +1,6 @@
 """Deploy, inspect, and reconcile source artifacts."""
 
+import difflib
 import json
 import shutil
 import time
@@ -235,6 +236,31 @@ def compare_skill(skill: Skill, adapter: HarnessAdapter) -> list[FileComparison]
             if existing.is_file() and relative not in expected:
                 comparisons.append(FileComparison(relative, existing, None, existing.read_bytes()))
     return comparisons
+
+
+def _decode(content: bytes | None) -> list[str] | None:
+    if content is None:
+        return []
+    try:
+        return content.decode("utf-8").splitlines(keepends=True)
+    except UnicodeDecodeError:
+        return None
+
+
+def unified_diff(comparison: FileComparison) -> list[str]:
+    """Render one file comparison as unified diff lines."""
+    deployed = _decode(comparison.deployed)
+    rendered = _decode(comparison.rendered)
+    if deployed is None or rendered is None:
+        return [f"Binary file {comparison.path} differs\n"]
+    return list(
+        difflib.unified_diff(
+            deployed,
+            rendered,
+            fromfile=f"deployed/{comparison.path}",
+            tofile=f"source/{comparison.path}",
+        )
+    )
 
 
 def classify_drift(

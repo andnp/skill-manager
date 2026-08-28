@@ -34,7 +34,8 @@ references, not committed values.
 
 ```bash
 skill-manager init
-skill-manager deploy [--skill NAME] [--harness claude] [--dry-run]
+skill-manager deploy [--skill NAME] [--harness claude] [--dry-run] [--diff]
+skill-manager diff [--skill NAME] [--harness NAME] [--patch] [--all]
 skill-manager deploy-mcp [--harness claude] [--dry-run]
 skill-manager export NAME --repo PATH --harness claude
 skill-manager list [--harness NAME]
@@ -43,6 +44,13 @@ skill-manager discover OWNER/REPOSITORY
 skill-manager install OWNER/REPOSITORY [--skill NAME]
 skill-manager update
 ```
+
+`diff` reports how installed copies differ from source and, using deployment
+receipts, which side moved: `source-ahead` needs a deploy, `deployed-ahead`
+means the installed copy was edited in place and would be overwritten,
+and `conflict` means both changed. Reach for `extract` rather than `deploy`
+when a deployed copy is the version worth keeping. `deploy --dry-run --diff`
+shows the same content a deployment would replace.
 
 Use `skill-manager COMMAND --help` for complete options. `--root` selects a
 different source repository and `--home` is useful for safe previews or tests.

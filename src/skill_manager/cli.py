@@ -16,6 +16,7 @@ from .mcp import deploy_mcp
 from .state import load_github_sources, save_github_selection
 from .sync import (
     DriftStatus,
+    PackageDrift,
     deploy,
     diff_skills,
     export_agent_rules,
@@ -141,12 +142,20 @@ def validate_command(ctx: click.Context, names: tuple[str, ...]) -> None:
 )
 @click.option("--dry-run", is_flag=True, help="Show planned changes without writing files.")
 @click.option("--json", "as_json", is_flag=True, help="Emit a machine-readable deployment report.")
+@click.option("--diff", "show_diff", is_flag=True, help="With --dry-run, show what each change would overwrite.")
 @click.pass_context
 def deploy_command(
-    ctx: click.Context, names: tuple[str, ...], harnesses: tuple[str, ...], dry_run: bool, as_json: bool
+    ctx: click.Context,
+    names: tuple[str, ...],
+    harnesses: tuple[str, ...],
+    dry_run: bool,
+    as_json: bool,
+    show_diff: bool,
 ) -> None:
     """Render and deploy source artifacts to selected harnesses."""
     root = ctx.obj["root"]
+    if show_diff and not dry_run:
+        raise click.ClickException("--diff requires --dry-run")
     available = {skill.name for skill in load_skills(root)}
     missing = sorted(set(names) - available)
     if missing:
@@ -170,6 +179,8 @@ def deploy_command(
     for result in results:
         table.add_row(result.harness, result.skill, str(result.changed_files), str(result.planned_files))
     console.print(table)
+    if show_diff:
+        _print_patches(diff_skills(root, _adapters(ctx, harnesses), names))
 
 
 DRIFT_STYLES = {
@@ -180,6 +191,13 @@ DRIFT_STYLES = {
     DriftStatus.CONFLICT: "red",
     DriftStatus.DIVERGED: "yellow",
 }
+
+
+def _print_patches(drifts: list[PackageDrift]) -> None:
+    for drift in drifts:
+        for comparison in drift.changed:
+            console.print(f"[cyan]{drift.harness}/{drift.skill}[/] [{DRIFT_STYLES[drift.status]}]{drift.status}[/]")
+            click.echo("".join(unified_diff(comparison)), nl=False)
 
 
 @main.command(name="diff")
@@ -212,10 +230,7 @@ def diff_command(
         console.print("[green]Every selected package is in sync.[/]")
         return
     if patch:
-        for drift in shown:
-            for comparison in drift.changed:
-                console.print(f"[cyan]{drift.harness}/{drift.skill}[/] [{DRIFT_STYLES[drift.status]}]{drift.status}[/]")
-                click.echo("".join(unified_diff(comparison)), nl=False)
+        _print_patches(shown)
         return
     table = Table(title="Drift")
     table.add_column("Harness", style="cyan")

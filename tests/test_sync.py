@@ -1,10 +1,21 @@
 import json
 import os
+from pathlib import Path
 
 import pytest
 
 from skill_manager.adapters import select_adapters
-from skill_manager.sync import AGENT_RULE_RECEIPT_PATH, RECEIPT_PATH, deploy, extract_skill, list_installed
+from skill_manager.sync import (
+    AGENT_RULE_RECEIPT_PATH,
+    RECEIPT_PATH,
+    DriftStatus,
+    FileComparison,
+    deploy,
+    diff_skills,
+    extract_skill,
+    list_installed,
+    unified_diff,
+)
 
 
 def make_source(root):
@@ -411,3 +422,93 @@ def test_deploy_rejects_invalid_agent_rule_receipt_without_deleting(tmp_path):
         deploy(source, select_adapters(("claude",), home=home))
 
     assert stale.exists()
+
+
+def test_diff_reports_a_package_edited_after_deployment(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    adapters = select_adapters(("claude",), home=home)
+    deploy(source, adapters)
+
+    (home / ".claude/skills/demo/SKILL.md").write_text("Edited in place.\n", encoding="utf-8")
+    drift = next(item for item in diff_skills(source, adapters) if item.skill == "demo")
+
+    assert drift.status is DriftStatus.DEPLOYED_AHEAD
+    assert [str(item.path) for item in drift.changed] == ["SKILL.md"]
+
+
+def test_diff_reports_source_changes_that_were_never_deployed(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    skill = make_source(source)
+    adapters = select_adapters(("claude",), home=home)
+    deploy(source, adapters)
+
+    (skill / "SKILL.md").write_text("Rewritten source.\n", encoding="utf-8")
+    drift = next(item for item in diff_skills(source, adapters) if item.skill == "demo")
+
+    assert drift.status is DriftStatus.SOURCE_AHEAD
+
+
+def test_diff_reports_a_conflict_when_both_sides_moved(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    skill = make_source(source)
+    adapters = select_adapters(("claude",), home=home)
+    deploy(source, adapters)
+
+    (skill / "SKILL.md").write_text("Rewritten source.\n", encoding="utf-8")
+    (home / ".claude/skills/demo/SKILL.md").write_text("Edited in place.\n", encoding="utf-8")
+    drift = next(item for item in diff_skills(source, adapters) if item.skill == "demo")
+
+    assert drift.status is DriftStatus.CONFLICT
+
+
+def test_diff_reports_in_sync_and_undeployed_packages(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    adapters = select_adapters(("claude",), home=home)
+
+    undeployed = next(item for item in diff_skills(source, adapters) if item.skill == "demo")
+    assert undeployed.status is DriftStatus.NOT_DEPLOYED
+
+    deploy(source, adapters)
+    assert next(item for item in diff_skills(source, adapters) if item.skill == "demo").status is DriftStatus.IN_SYNC
+
+
+def test_diff_compares_rendered_output_rather_than_raw_source(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    adapters = select_adapters(("claude",), home=home)
+    deploy(source, adapters)
+
+    drift = next(item for item in diff_skills(source, adapters) if item.skill == "demo")
+
+    assert drift.status is DriftStatus.IN_SYNC
+    assert drift.comparisons[0].rendered == b"Use haiku.\n"
+
+
+def test_diff_reports_a_deployed_file_with_no_source(tmp_path):
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    adapters = select_adapters(("claude",), home=home)
+    deploy(source, adapters)
+
+    extra = home / ".claude/skills/demo/references/orphan.md"
+    extra.parent.mkdir(parents=True)
+    extra.write_text("orphan\n", encoding="utf-8")
+    drift = next(item for item in diff_skills(source, adapters) if item.skill == "demo")
+
+    orphan = next(item for item in drift.changed if str(item.path) == "references/orphan.md")
+    assert orphan.rendered is None
+    assert orphan.deployed == b"orphan\n"
+
+
+def test_unified_diff_reports_binary_files_without_decoding(tmp_path):
+    comparison = FileComparison(Path("logo.png"), tmp_path / "logo.png", b"\xff\xfe\x00", b"\x00\xff")
+
+    assert unified_diff(comparison) == ["Binary file logo.png differs\n"]

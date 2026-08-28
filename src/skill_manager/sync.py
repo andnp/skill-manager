@@ -193,16 +193,6 @@ def _reconcile_stale_agent_rules(
     return results, stale_by_harness, records
 
 
-def _remove_stale_files(root: Path, expected: set[Path], dry_run: bool) -> int:
-    if not root.exists():
-        return 0
-    stale = [file for file in root.rglob("*") if file.is_file() and file.relative_to(root) not in expected]
-    if not dry_run:
-        for file in stale:
-            file.unlink()
-    return len(stale)
-
-
 def _deployable_files(skill: Skill, adapter: HarnessAdapter) -> list[Path]:
     return [
         source
@@ -225,6 +215,13 @@ def compare_skill(skill: Skill, adapter: HarnessAdapter) -> list[FileComparison]
                 destination.read_bytes() if destination.is_file() else None,
             )
         )
+    expected = {comparison.path for comparison in comparisons}
+    root = adapter.root_for("skill") / skill.name
+    if root.is_dir():
+        for existing in sorted(root.rglob("*")):
+            relative = existing.relative_to(root)
+            if existing.is_file() and relative not in expected:
+                comparisons.append(FileComparison(relative, existing, None, existing.read_bytes()))
     return comparisons
 
 
@@ -238,10 +235,13 @@ def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = F
             for comparison in comparisons
             if comparison.rendered is not None
         )
-        destination_root = adapter.root_for("skill") / skill.name
-        expected = {comparison.path for comparison in comparisons}
-        changed += _remove_stale_files(destination_root, expected, dry_run)
-        results.append(Deployment(adapter.name, skill.name, changed, len(comparisons)))
+        stale = [comparison for comparison in comparisons if comparison.rendered is None]
+        if not dry_run:
+            for comparison in stale:
+                comparison.destination.unlink()
+        results.append(
+            Deployment(adapter.name, skill.name, changed + len(stale), len(comparisons) - len(stale))
+        )
     return results
 
 

@@ -23,6 +23,7 @@ from .sync import (
     extract_skill,
     list_installed,
     read_receipts,
+    unified_diff,
 )
 from .validation import validate
 
@@ -191,8 +192,11 @@ DRIFT_STYLES = {
     help="Inspect one harness; repeat for more than one.",
 )
 @click.option("--all", "show_all", is_flag=True, help="Include packages that are already in sync.")
+@click.option("--patch", is_flag=True, help="Print unified diffs instead of a summary table.")
 @click.pass_context
-def diff_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[str, ...], show_all: bool) -> None:
+def diff_command(
+    ctx: click.Context, names: tuple[str, ...], harnesses: tuple[str, ...], show_all: bool, patch: bool
+) -> None:
     """Report how deployed packages differ from their source."""
     root = ctx.obj["root"]
     available = {skill.name for skill in load_skills(root)}
@@ -206,6 +210,12 @@ def diff_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[st
     shown = [drift for drift in drifts if show_all or drift.status is not DriftStatus.IN_SYNC]
     if not shown:
         console.print("[green]Every selected package is in sync.[/]")
+        return
+    if patch:
+        for drift in shown:
+            for comparison in drift.changed:
+                console.print(f"[cyan]{drift.harness}/{drift.skill}[/] [{DRIFT_STYLES[drift.status]}]{drift.status}[/]")
+                click.echo("".join(unified_diff(comparison)), nl=False)
         return
     table = Table(title="Drift")
     table.add_column("Harness", style="cyan")

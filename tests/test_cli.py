@@ -317,3 +317,78 @@ def test_export_agents_preserves_conflicting_codex_agents_file(tmp_path):
     assert result.exit_code != 0
     assert "agent rule conflict" in result.output
     assert destination.read_text(encoding="utf-8") == "Existing guidance.\n"
+
+
+def _deployed_source(tmp_path):
+    root = tmp_path / "repo"
+    home = tmp_path / "home"
+    skill = root / "skills" / "demo"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("Do the thing.\n", encoding="utf-8")
+    result = CliRunner().invoke(main, ["--root", str(root), "--home", str(home), "deploy", "--harness", "claude"])
+    assert result.exit_code == 0, result.output
+    return root, home
+
+
+def test_diff_reports_nothing_when_every_package_is_in_sync(tmp_path):
+    root, home = _deployed_source(tmp_path)
+
+    result = CliRunner().invoke(main, ["--root", str(root), "--home", str(home), "diff", "--harness", "claude"])
+
+    assert result.exit_code == 0, result.output
+    assert "in sync" in result.output
+
+
+def test_diff_names_the_files_of_a_package_edited_in_place(tmp_path):
+    root, home = _deployed_source(tmp_path)
+    (home / ".claude/skills/demo/SKILL.md").write_text("Edited in place.\n", encoding="utf-8")
+
+    result = CliRunner().invoke(main, ["--root", str(root), "--home", str(home), "diff", "--harness", "claude"])
+
+    assert result.exit_code == 0, result.output
+    assert "deployed-ahead" in result.output
+    assert "SKILL.md" in result.output
+
+
+def test_diff_patch_shows_the_changed_content(tmp_path):
+    root, home = _deployed_source(tmp_path)
+    (home / ".claude/skills/demo/SKILL.md").write_text("Edited in place.\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        main, ["--root", str(root), "--home", str(home), "diff", "--patch", "--harness", "claude"]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "-Edited in place." in result.output
+    assert "+Do the thing." in result.output
+
+
+def test_diff_rejects_an_unknown_skill(tmp_path):
+    root, home = _deployed_source(tmp_path)
+
+    result = CliRunner().invoke(main, ["--root", str(root), "--home", str(home), "diff", "--skill", "absent"])
+
+    assert result.exit_code != 0
+    assert "source skill(s) not found: absent" in result.output
+
+
+def test_deploy_diff_requires_dry_run(tmp_path):
+    root, home = _deployed_source(tmp_path)
+
+    result = CliRunner().invoke(main, ["--root", str(root), "--home", str(home), "deploy", "--diff"])
+
+    assert result.exit_code != 0
+    assert "--diff requires --dry-run" in result.output
+
+
+def test_deploy_dry_run_diff_shows_what_would_be_overwritten(tmp_path):
+    root, home = _deployed_source(tmp_path)
+    (home / ".claude/skills/demo/SKILL.md").write_text("Edited in place.\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        main, ["--root", str(root), "--home", str(home), "deploy", "--dry-run", "--diff", "--harness", "claude"]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "-Edited in place." in result.output
+    assert (home / ".claude/skills/demo/SKILL.md").read_text() == "Edited in place.\n"

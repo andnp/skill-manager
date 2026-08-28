@@ -14,7 +14,16 @@ from .github import DiscoveredSkill, GitHubError, discover, install
 from .manifest import MANIFEST_NAME, load_skills
 from .mcp import deploy_mcp
 from .state import load_github_sources, save_github_selection
-from .sync import deploy, export_agent_rules, export_skill, extract_skill, list_installed, read_receipts
+from .sync import (
+    DriftStatus,
+    deploy,
+    diff_skills,
+    export_agent_rules,
+    export_skill,
+    extract_skill,
+    list_installed,
+    read_receipts,
+)
 from .validation import validate
 
 console = Console()
@@ -159,6 +168,54 @@ def deploy_command(
     table.add_column("Planned", justify="right")
     for result in results:
         table.add_row(result.harness, result.skill, str(result.changed_files), str(result.planned_files))
+    console.print(table)
+
+
+DRIFT_STYLES = {
+    DriftStatus.IN_SYNC: "green",
+    DriftStatus.NOT_DEPLOYED: "yellow",
+    DriftStatus.SOURCE_AHEAD: "cyan",
+    DriftStatus.DEPLOYED_AHEAD: "magenta",
+    DriftStatus.CONFLICT: "red",
+    DriftStatus.DIVERGED: "yellow",
+}
+
+
+@main.command(name="diff")
+@click.option("--skill", "names", multiple=True, help="Inspect only this skill; repeat for more than one.")
+@click.option(
+    "--harness",
+    "harnesses",
+    multiple=True,
+    type=click.Choice(HARNESS_CHOICES),
+    help="Inspect one harness; repeat for more than one.",
+)
+@click.option("--all", "show_all", is_flag=True, help="Include packages that are already in sync.")
+@click.pass_context
+def diff_command(ctx: click.Context, names: tuple[str, ...], harnesses: tuple[str, ...], show_all: bool) -> None:
+    """Report how deployed packages differ from their source."""
+    root = ctx.obj["root"]
+    available = {skill.name for skill in load_skills(root)}
+    missing = sorted(set(names) - available)
+    if missing:
+        raise click.ClickException(f"source skill(s) not found: {', '.join(missing)}")
+    try:
+        drifts = diff_skills(root, _adapters(ctx, harnesses), names)
+    except (OSError, ValueError) as error:
+        raise click.ClickException(str(error)) from error
+    shown = [drift for drift in drifts if show_all or drift.status is not DriftStatus.IN_SYNC]
+    if not shown:
+        console.print("[green]Every selected package is in sync.[/]")
+        return
+    table = Table(title="Drift")
+    table.add_column("Harness", style="cyan")
+    table.add_column("Skill")
+    table.add_column("Status")
+    table.add_column("Files", overflow="fold")
+    for drift in shown:
+        style = DRIFT_STYLES[drift.status]
+        files = ", ".join(str(comparison.path) for comparison in drift.changed)
+        table.add_row(drift.harness, drift.skill, f"[{style}]{drift.status}[/]", files)
     console.print(table)
 
 

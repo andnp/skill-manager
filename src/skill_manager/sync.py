@@ -296,6 +296,34 @@ def classify_drift(
     return DriftStatus.DIVERGED
 
 
+@dataclass(frozen=True)
+class PackageDrift:
+    """One skill's divergence from its deployed copy in one harness."""
+
+    harness: str
+    skill: str
+    status: DriftStatus
+    comparisons: list[FileComparison]
+
+    @property
+    def changed(self) -> list[FileComparison]:
+        return [comparison for comparison in self.comparisons if comparison.changed]
+
+
+def diff_skills(root: Path, adapters: list[HarnessAdapter], names: tuple[str, ...] = ()) -> list[PackageDrift]:
+    """Compare every selected source skill against its deployed copies."""
+    receipts = read_receipts(root)
+    drifts: list[PackageDrift] = []
+    for skill in load_skills(root):
+        if names and skill.name not in names:
+            continue
+        for adapter in adapters:
+            comparisons = compare_skill(skill, adapter)
+            status = classify_drift(skill, adapter, comparisons, receipts)
+            drifts.append(PackageDrift(adapter.name, skill.name, status, comparisons))
+    return drifts
+
+
 def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = False) -> list[Deployment]:
     """Render and deploy one skill to every selected harness."""
     results: list[Deployment] = []

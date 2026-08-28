@@ -4,6 +4,7 @@ import json
 import shutil
 import time
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 from .adapters import HarnessAdapter, select_adapters
@@ -38,6 +39,17 @@ class FileComparison:
     @property
     def changed(self) -> bool:
         return self.rendered != self.deployed
+
+
+class DriftStatus(StrEnum):
+    """Why a deployed package differs from its source, when receipts can tell."""
+
+    IN_SYNC = "in-sync"
+    NOT_DEPLOYED = "not-deployed"
+    SOURCE_AHEAD = "source-ahead"
+    DEPLOYED_AHEAD = "deployed-ahead"
+    CONFLICT = "conflict"
+    DIVERGED = "diverged"
 
 
 @dataclass(frozen=True)
@@ -223,6 +235,39 @@ def compare_skill(skill: Skill, adapter: HarnessAdapter) -> list[FileComparison]
             if existing.is_file() and relative not in expected:
                 comparisons.append(FileComparison(relative, existing, None, existing.read_bytes()))
     return comparisons
+
+
+def classify_drift(
+    skill: Skill,
+    adapter: HarnessAdapter,
+    comparisons: list[FileComparison],
+    receipts: list[dict[str, object]],
+) -> DriftStatus:
+    """Explain a package's divergence using the last recorded deployment."""
+    destination = adapter.root_for("skill") / skill.name
+    if not destination.is_dir():
+        return DriftStatus.NOT_DEPLOYED
+    if not any(comparison.changed for comparison in comparisons):
+        return DriftStatus.IN_SYNC
+    receipt = next(
+        (
+            item
+            for item in reversed(receipts)
+            if item.get("harness") == adapter.name and item.get("skill") == skill.name
+        ),
+        None,
+    )
+    if receipt is None:
+        return DriftStatus.DIVERGED
+    source_moved = receipt.get("source_hash") != package_hash(skill.path)
+    deployed_moved = receipt.get("deployed_hash") != package_hash(destination)
+    if source_moved and deployed_moved:
+        return DriftStatus.CONFLICT
+    if deployed_moved:
+        return DriftStatus.DEPLOYED_AHEAD
+    if source_moved:
+        return DriftStatus.SOURCE_AHEAD
+    return DriftStatus.DIVERGED
 
 
 def deploy_skill(skill: Skill, adapters: list[HarnessAdapter], dry_run: bool = False) -> list[Deployment]:

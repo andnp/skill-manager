@@ -1,0 +1,4 @@
+interface:
+  display_name: "Live Code Reviewer"
+  short_description: "Live pair-programming and diff review with 2m debounce"
+  default_prompt: "Use $live-code-reviewer to monitor my changes and review diffs as I write code."

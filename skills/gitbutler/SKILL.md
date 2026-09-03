@@ -5,7 +5,14 @@ description: "Commit, push, branch, and manage version control with GitButler. U
 
 # GitButler CLI Skill
 
-Use GitButler CLI (`but`) as the default version-control interface.
+Use GitButler CLI (`but`) only in repositories already managed by GitButler.
+In an ordinary Git repository, use the repository's normal Git workflow instead.
+
+## Applicability
+
+If the repository is not a GitButler workspace, stop using this skill and use Git instead.
+GitButler manages multiple branches in parallel on a `gitbutler/workspace` branch; its
+workspace state and ordinary Git commit history are not interchangeable.
 
 ## Start Here
 

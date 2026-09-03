@@ -83,6 +83,12 @@ The first token on each `but diff` / `but status` line is that line's ID — pas
 - Tear off a branch: `but move <branch> --unstack`
 - Discard: `but discard <id> [<id>...]` — accepts branches, commits, committed files, uncommitted files/hunks, or `zz` for all uncommitted changes
 - Push: `but push <branch-name>` — always specify the branch; bare `but push` pushes ALL branches when run non-interactively
+  For a stacked set of branches, push the topmost branch in the stack, even when only
+  a lower branch changed — pushing a lower branch alone has produced an incomplete or
+  incorrect push of that branch's own commits. Confirm with `but status -fv` or
+  `but show <branch-id>` that the branch's lane actually contains the expected commit;
+  `but push` reads GitButler's internal branch model and can silently discard a commit
+  that was added outside it (e.g. via a linked worktree).
 - Pull (update workspace from the target): `but pull` — the output reports the result; `but pull --check` previews without updating when a preview is actually needed
 - Create PR: `but pr new <branch-id> [-m "Title..."] [-F pr_message.txt] [-t] [--draft]` — auto-pushes first; do not run `but push` before it
 

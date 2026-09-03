@@ -183,6 +183,17 @@ If that recovery command fails, do NOT try `uncommit`, `squash`, or `undo` as a 
 
 `but status` marks uncommitted files with unresolved merge conflicts `{conflicted}`; they are excluded from committable changes and outside `but resolve` mode. Choose the desired contents or delete the file, then `git add -- <path>` to mark it resolved (the one permitted `git add`).
 
+### Commit or pick reports success but the change doesn't persist
+
+If `but commit` or `but pick` prints a success line but `but show <id>` can't find the
+commit, or `but status -fv` doesn't show it in the branch's lane, don't trust the success
+message. Try `but rub <file-or-hunk-id> <existing-commit-id>` to amend the change directly
+into an existing commit instead of creating a new one.
+
+Only use `but rub` against the **topmost** commit of a branch. Amending the tip of a
+non-topmost branch in a stack can unapply that branch's lane even though `but show`
+confirms the content landed; recover with `but undo` or `but oplog restore` if this happens.
+
 ## Git-to-But Map
 
 | git | but |

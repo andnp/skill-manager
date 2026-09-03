@@ -15,8 +15,7 @@ to add the retry wrapper", "have codex implement this", "delegate that to codex"
 
 Do not invoke it because a task looks delegable, because work should be parallelised,
 or because a cheaper agent would do. For those, use the harness's built-in subagent
-mechanism or the `sub` skill. This skill is not a code-review mechanism either — for an
-independent outside opinion, use `delegate-code-review`.
+mechanism or the `sub` skill.
 
 ## Before delegating
 

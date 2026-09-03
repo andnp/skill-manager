@@ -24,16 +24,24 @@ Keep Jira focused on real planning units. Do not mirror branches, checklists, or
 ## Search before proposing
 
 1. Read the relevant spec, notes, design docs, or `research_plan.md`; query memory for Jira conventions and task context.
-2. Search for existing epics, issues, and likely duplicates with both forms:
+2. Lead the duplicate/epic check with unfiltered semantic search — don't add `--issue-type`,
+   status, assignee, label, or other narrowing filters when the goal is "does something like
+   this already exist":
 
    ```bash
-   corecli jira search --project ENG --jql "..."
-   corecli jira search-semantic --text "..." --issue-type Task
+   corecli jira search-semantic --text "..."
    ```
 
+   Any filter on an exploratory search is a bet that you already know the shape of what you're
+   looking for — and that bet can be wrong (e.g. this org uses more than one top-tier grouping
+   type: `Epic` and `Release` are both hierarchy_level 1, so filtering to `Epic` alone once
+   missed an existing `Release`-type match and produced a redundant ticket). Default to the
+   widest search that still returns a manageable result set, and only narrow once you've seen
+   what's actually out there.
 3. Phrase semantic searches a couple of ways so synonyms and older terminology are covered.
-4. Inspect plausible matches with `corecli jira get ISSUE-KEY --json` and surface them before drafting new work.
-5. Treat the project key as `ENG` unless the user explicitly names another project.
+4. Only after reviewing the unfiltered semantic results, use `corecli jira search --project ENG --jql "..."` for anything semantic search can't express well — and even there, add a filter only when you already have evidence narrowing it is safe, not by default.
+5. Inspect plausible matches with `corecli jira get ISSUE-KEY --json` and surface them before drafting new work.
+6. Treat the project key as `ENG` unless the user explicitly names another project.
 
 ## Choose and present the shape
 

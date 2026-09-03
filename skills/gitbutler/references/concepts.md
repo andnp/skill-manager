@@ -2,6 +2,19 @@
 
 Deep dive into GitButler's conceptual model and philosophy.
 
+## Contents
+
+- [The Workspace Model](#the-workspace-model)
+- [CLI IDs: Short Identifiers](#cli-ids-short-identifiers)
+- [Parallel vs Stacked Branches](#parallel-vs-stacked-branches)
+- [The Editing Model](#the-editing-model)
+- [Dependency Tracking](#dependency-tracking)
+- [Empty Commits as Placeholders](#empty-commits-as-placeholders)
+- [Operation History (Oplog)](#operation-history-oplog)
+- [Applied vs Unapplied Branches](#applied-vs-unapplied-branches)
+- [Conflict Resolution Mode](#conflict-resolution-mode)
+- [Read-Only Git Commands](#read-only-git-commands)
+
 ## The Workspace Model
 
 ### Traditional Git: Serial Branching

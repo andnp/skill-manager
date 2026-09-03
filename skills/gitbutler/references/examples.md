@@ -4,6 +4,21 @@ Real-world examples of common workflows.
 
 **Note on CLI IDs:** Examples below use illustrative IDs like `bu`, `nn`, `a1` to keep commands readable. In practice, **always read actual IDs from `but status -fv`** — they are generated per-session and will differ from these examples. Branch IDs are derived from unique substrings of the branch name (e.g., `fe` from `feature-x`), commit IDs are short change-ID prefixes that stay stable across history edits (e.g., `kyn`; commits without a change ID fall back to a sha prefix), and file/hunk/stack IDs are auto-generated (e.g., `r`, `r:c`, `h0`). All IDs are unique across entity types.
 
+## Contents
+
+- [Starting Independent Parallel Work](#example-1-starting-independent-parallel-work)
+- [Building Stacked Features](#example-2-building-stacked-features)
+- [Amending Fixes Into Existing Commits](#example-3-amending-fixes-into-existing-commits)
+- [Reorganizing Commit History](#example-4-reorganizing-commit-history)
+- [Stacking Existing Branches](#example-5-stacking-existing-branches)
+- [Conflict Resolution](#example-6-conflict-resolution)
+- [Complete Feature Development Workflow](#example-7-complete-feature-development-workflow)
+- [Working with Applied/Unapplied Branches](#example-8-working-with-appliedunapplied-branches)
+- [Fixing History Before Pushing](#example-9-fixing-history-before-pushing)
+- [Daily Development Workflow](#example-10-daily-development-workflow)
+- [Recovering from Mistakes](#example-11-recovering-from-mistakes)
+- [Tips and Tricks](#tips-and-tricks)
+
 ## Example 1: Starting Independent Parallel Work
 
 **Scenario:** Need to work on two independent features: a new API endpoint and UI styling updates.

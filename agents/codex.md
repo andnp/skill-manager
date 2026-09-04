@@ -11,6 +11,11 @@
 - Use `explorer` for read-heavy investigation, `coder` for well-scoped implementation, and `complex_coder` for ambiguous or high-risk work.
 - Assign coherent scopes that may span related commits; delegate by semantic ownership rather than commit count.
 
+## Memory
+
+- Treat an ongoing conversation as one task; do not search memory again for follow-up questions, clarifications, approvals, or status messages.
+- Search memory only when a genuinely new substantive task begins or a memory checkpoint requires it.
+
 ## Python quality
 
 - Annotate function parameters.

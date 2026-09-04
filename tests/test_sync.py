@@ -62,6 +62,34 @@ def test_deploy_lists_and_extracts_newest_skill(tmp_path):
     assert (skill / "SKILL.md").read_text() == "Edited by Codex.\n"
 
 
+def test_deploy_writes_pi_global_artifacts(tmp_path: Path):
+    """
+    Deploy Pi resources below its global agent directory.
+
+    The contract covers the native skill, hook, prompt, and instruction paths.
+    """
+    source = tmp_path / "source"
+    home = tmp_path / "home"
+    make_source(source)
+    (source / "prompts").mkdir()
+    (source / "prompts/review.md").write_text("Review.\n", encoding="utf-8")
+    agents = source / "agents"
+    agents.mkdir()
+    (agents / "shared.md").write_text("Global {{ model }}.\n", encoding="utf-8")
+    (agents / "pi.md").write_text("Pi guidance.\n", encoding="utf-8")
+    (agents / "skill-manager.json").write_text(
+        json.dumps({"model": {"pi": "pi-model"}}), encoding="utf-8"
+    )
+
+    deploy(source, select_adapters(("pi",), home=home))
+
+    agent_root = home / ".pi/agent"
+    assert (agent_root / "skills/demo/SKILL.md").read_text() == "Use cheap.\n"
+    assert (agent_root / "hooks/notify.sh").exists()
+    assert (agent_root / "prompts/review.md").read_text() == "Review.\n"
+    assert (agent_root / "AGENTS.md").read_text() == "Global pi-model.\n\nPi guidance.\n"
+
+
 def test_deploy_writes_hash_receipts_for_selected_skills(tmp_path):
     """Record validation and rendered hashes without deploying unrelated artifacts."""
     source = tmp_path / "source"

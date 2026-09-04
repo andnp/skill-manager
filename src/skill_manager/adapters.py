@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-SUPPORTED_HARNESSES = ("claude", "codex", "copilot", "agy", "opencode")
+SUPPORTED_HARNESSES = ("claude", "codex", "copilot", "agy", "opencode", "pi")
 MCP_HARNESSES = ("claude", "codex", "copilot", "agy")
 ALIASES = {"copilot-cli": "copilot", "antigravity": "agy", "antigravity-cli": "agy"}
 
@@ -70,6 +70,7 @@ def default_adapters(home: Path | None = None) -> dict[str, HarnessAdapter]:
         "copilot": home / ".copilot",
         "agy": home / ".gemini" / "config",
         "opencode": home / ".config" / "opencode",
+        "pi": home / ".pi" / "agent",
     }
     filenames = {name: "CLAUDE.md" if name == "claude" else "AGENTS.md" for name in roots}
     mcp_files = {

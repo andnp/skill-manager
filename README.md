@@ -54,8 +54,9 @@ shows the same content a deployment would replace.
 
 Use `skill-manager COMMAND --help` for complete options. `--root` selects a
 different source repository and `--home` is useful for safe previews or tests.
-The supported harness names are `claude`, `codex`, `copilot`, `agy`, and
-`opencode` (with aliases for Copilot CLI and Antigravity).
+The supported harness names are `claude`, `codex`, `copilot`, `agy`, `opencode`,
+and `pi` (with aliases for Copilot CLI and Antigravity). Pi uses
+`~/.pi/agent` for its global skills, hooks, prompts, and `AGENTS.md`.
 
 `deploy-mcp` targets Claude, Codex, Copilot CLI, and Agy by default. OpenCode
 is intentionally excluded until its MCP configuration is added to the manager.

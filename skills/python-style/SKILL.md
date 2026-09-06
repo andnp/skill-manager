@@ -45,6 +45,13 @@ House style. Existing repository conventions win where they conflict.
   Use an early-return guard for the simple case; if logic must run on both
   paths, pull it into a helper called from each—not a dangling `else`.
 
+## Whitespace
+
+- Use blank lines to separate conceptual phases within longer functions, such
+  as validation, resolution, transformation, enrichment, filtering, and
+  collection. Add them where they expose a change in responsibility; do not
+  space every statement mechanically.
+
 ## Reuse before reinventing
 
 - Before writing a recursive or tree-walking helper—flatten a nested dict, deep

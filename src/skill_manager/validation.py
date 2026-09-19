@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .adapters import SUPPORTED_HARNESSES
-from .manifest import VARIABLES_NAME, load_manifest
+from .manifest import MANUAL_INVOCATION_CLAUSE, VARIABLES_NAME, load_manifest, skill_metadata
 from .rendering import VariableError, load_variables, render_file
 
 
@@ -60,8 +60,20 @@ def validate(root: Path, names: tuple[str, ...] = ()) -> SkillValidation:
         if not files:
             errors.append(f"skill package is empty: {name}")
             continue
-        if not (package / "SKILL.md").is_file() or (package / "SKILL.md").is_symlink():
+        skill_md = package / "SKILL.md"
+        if not skill_md.is_file() or skill_md.is_symlink():
             errors.append(f"skill package is missing SKILL.md: {name}")
+        else:
+            description, invocation = skill_metadata(skill_md)
+            if invocation not in {"auto", "manual"}:
+                errors.append(f"skill has invalid invocation '{invocation}': {name}")
+            elif invocation == "manual":
+                if not name.startswith("p_"):
+                    errors.append(f"manual-invocation skill directory must be prefixed 'p_': {name}")
+                if MANUAL_INVOCATION_CLAUSE not in description:
+                    errors.append(f"manual-invocation skill description must include the manual clause: {name}")
+            elif name.startswith("p_"):
+                errors.append(f"auto-invocation skill must not use the 'p_' prefix: {name}")
         for path in package.rglob("*"):
             if path.is_symlink():
                 errors.append(f"skill package contains a symlink: {name}/{path.relative_to(package)}")

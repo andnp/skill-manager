@@ -63,18 +63,34 @@ def load_mcp_config(root: Path, manifest: SourceManifest | None = None) -> McpCo
     return McpConfig(tuple(servers), tuple(retired))
 
 
-def _summary(path: Path) -> str:
+MANUAL_INVOCATION_CLAUSE = "Invoke only when explicitly requested by name; do not self-trigger."
+
+
+def _frontmatter_field(frontmatter: str, key: str) -> str | None:
+    for line in frontmatter.splitlines():
+        if line.strip().startswith(f"{key}:"):
+            return line.split(":", 1)[1].strip().strip("\"'")
+    return None
+
+
+def skill_metadata(path: Path) -> tuple[str, str]:
+    """Return (description, invocation) parsed from a skill's frontmatter."""
     text = path.read_text(encoding="utf-8")
+    frontmatter, body = "", text
     if text.startswith("---"):
-        frontmatter, _, text = text[3:].partition("---")
-        for line in frontmatter.splitlines():
-            if line.strip().startswith("description:"):
-                return line.split(":", 1)[1].strip().strip("\"'")
-    for line in text.splitlines():
-        line = line.strip()
-        if line and not line.startswith("#"):
-            return line
-    return "No summary provided"
+        frontmatter, _, body = text[3:].partition("---")
+    description = _frontmatter_field(frontmatter, "description")
+    if description is None:
+        description = next(
+            (line.strip() for line in body.splitlines() if line.strip() and not line.strip().startswith("#")),
+            "No summary provided",
+        )
+    invocation = _frontmatter_field(frontmatter, "invocation") or "auto"
+    return description, invocation
+
+
+def _summary(path: Path) -> str:
+    return skill_metadata(path)[0]
 
 
 def load_skills(root: Path, manifest: SourceManifest | None = None) -> list[Skill]:
@@ -87,7 +103,8 @@ def load_skills(root: Path, manifest: SourceManifest | None = None) -> list[Skil
     for path in sorted(item for item in skills_root.iterdir() if item.is_dir() and not item.name.startswith(".")):
         files = tuple(sorted(file for file in path.rglob("*") if file.is_file() and file.name != VARIABLES_NAME))
         markdown = next((file for file in files if file.name.lower() in {"skill.md", "readme.md"}), None)
-        skills.append(Skill(path.name, path, _summary(markdown) if markdown else "No summary provided", files))
+        description, invocation = skill_metadata(markdown) if markdown else ("No summary provided", "auto")
+        skills.append(Skill(path.name, path, description, files, invocation))
     return skills
 
 

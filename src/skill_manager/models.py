@@ -39,6 +39,7 @@ class Skill:
     path: Path
     summary: str
     files: tuple[Path, ...]
+    invocation: str = "auto"
 
 
 @dataclass(frozen=True)

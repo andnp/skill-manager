@@ -7,7 +7,7 @@ description: "Use only to obtain an independent outside opinion through the exte
 
 Use this skill only to obtain an independent outside opinion from Gemini through the external `agy` CLI. It is an advisory review mechanism, not a general delegation or subagent-orchestration mechanism.
 
-If the task calls for splitting work among the harness's built-in subagents, use the built-in subagent mechanism (or the `sub` skill) instead. Do not invoke this skill merely because another agent should do work; invoke it when an external review is useful or explicitly requested.
+If the task calls for splitting work among the harness's built-in subagents, use the built-in subagent mechanism (or the `p_sub` skill) instead. Do not invoke this skill merely because another agent should do work; invoke it when an external review is useful or explicitly requested.
 
 ## Trigger boundary
 

@@ -1,7 +1,7 @@
 interface:
   display_name: "Delegate to a Subagent"
   short_description: "Delegate bounded work to a subagent"
-  default_prompt: "Invoke $sub now. You must immediately delegate this task to the configured cheap subagent, then review its result."
+  default_prompt: "Invoke $p_sub now. You must immediately delegate this task to the configured cheap subagent, then review its result."
 
 policy:
   allow_implicit_invocation: true

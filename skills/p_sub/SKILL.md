@@ -1,6 +1,7 @@
 ---
-name: sub
-description: "Meta-prompting skill: synthesize the current task into a focused prompt, then immediately delegate it to the configured cheap sub-agent. Every /sub invocation requires delegation."
+name: p_sub
+description: "Meta-prompting skill: synthesize the current task into a focused prompt, then immediately delegate it to the configured cheap sub-agent. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Sub — Delegate to a Cheap Agent

@@ -1,4 +1,4 @@
 interface:
   display_name: "Architecture Reduction"
   short_description: "Find big, evidence-backed code reductions"
-  default_prompt: "Use $architecture-reduction to find and implement high-leverage, net-negative code reductions in this repository."
+  default_prompt: "Use $p_architecture-reduction to find and implement high-leverage, net-negative code reductions in this repository."

@@ -1,27 +1,14 @@
 ---
-name: architecture-reduction
-description: "Audit and refactor an owned codebase for net-negative code volume, escalating from dead code to architectural, algorithmic, and data-structure simplification with evidence and validation."
+name: p_architecture-reduction
+description: "Audit and refactor an owned codebase for net-negative code volume, escalating from dead code to architectural, algorithmic, and data-structure simplification with evidence and validation. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Architecture Reduction
 
 Use this skill when the user wants a codebase slimmer, simpler, more modular, or more reusable. The outcome is a validated sequence of behavior-preserving changes with more code deleted than added whenever the repository permits it.
 
-## Core standard
-
-Dream big. Dead-code removal is the lowest level of achievement, not the goal.
-
-For every subsystem, ask whether a better representation or design could remove whole families of code:
-
-- Can one capability-oriented boundary replace an oversized repository or service?
-- Can a generic engine replace several nearly identical workflows?
-- Can an index, cache, memoized representation, or incremental algorithm replace repeated full scans?
-- Can a registry, schema, pipeline, or state machine replace branching and hand-written dispatch?
-- Are multiple models or adapters translating between equivalent shapes?
-- Can a canonical data structure make downstream code trivial?
-- What would a 10x simpler design look like, and what evidence would make it safe to adopt?
-
-Do not add abstraction for its own sake. Prefer changes that reduce conceptual paths, coupling, maintenance surface, or repeated work in addition to reducing LOC.
+Apply the `architecture-knowledge` skill's core standard and leverage taxonomy throughout this audit rather than re-deriving them here.
 
 ## 1. Establish evidence
 
@@ -40,12 +27,7 @@ Use symbol/caller/import tools or indexed repository tools when available. Use `
 
 ## 2. Build an opportunity ledger
 
-Classify findings by leverage rather than by file type:
-
-1. Literal dead code: unused settings, orphan modules, stale exports, unreachable aliases, and obsolete compatibility paths.
-2. Redundancy: forwarding facades, duplicate helpers, repeated fallback paths, and equivalent model translations.
-3. Boundary simplification: oversized repositories, unclear ownership, dynamic seams, and duplicated orchestration.
-4. Problem reframing: algorithms, data structures, indexes, registries, pipelines, state machines, or incremental computation that could eliminate large regions of code.
+Classify each finding using `architecture-knowledge`'s leverage taxonomy (literal dead code, redundancy, boundary simplification, problem reframing) rather than by file type. When duplication is the primary complaint, or a candidate's implementations look different but may answer the same requirement or encode the same truth, use the `duplication-diagnostics` skill for the escalation ladder and diagnostic before ranking it here.
 
 For every candidate, capture:
 

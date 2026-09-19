@@ -1,7 +1,7 @@
 interface:
   display_name: "Task Observer"
   short_description: "Review memory-backed skill improvements"
-  default_prompt: "Use $task-observer to review open skill observations safely."
+  default_prompt: "Use $p_task-observer to review open skill observations safely."
 
 policy:
   allow_implicit_invocation: true

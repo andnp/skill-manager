@@ -1,6 +1,7 @@
 ---
-name: task-observer
-description: "Review open skill-improvement observations from mcp-memory and make small, evidence-backed updates to the skill source tree."
+name: p_task-observer
+description: "Review open skill-improvement observations from mcp-memory and make small, evidence-backed updates to the skill source tree. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Task Observer

@@ -1,6 +1,7 @@
 ---
-name: delegate-to-codex
-description: "Delegate an implementation task to the external Codex CLI (`codex exec`) running gpt-5.6-luna at low reasoning effort. EXPLICIT REQUEST ONLY — invoke solely when the user asks for Codex by name (\"ask codex to...\", \"have codex implement...\", \"delegate this to codex\"). Never invoke implicitly, and never as a substitute for the harness's built-in subagents or the `sub` skill."
+name: p_delegate-to-codex
+description: "Delegate an implementation task to the external Codex CLI (`codex exec`) running gpt-5.6-luna at low reasoning effort. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Delegate to Codex
@@ -15,7 +16,7 @@ to add the retry wrapper", "have codex implement this", "delegate that to codex"
 
 Do not invoke it because a task looks delegable, because work should be parallelised,
 or because a cheaper agent would do. For those, use the harness's built-in subagent
-mechanism or the `sub` skill.
+mechanism or the `p_sub` skill.
 
 ## Before delegating
 

@@ -9,3 +9,4 @@
 ## Claude workflow
 
 - Keep Claude-specific command syntax and tool-loading details here; keep general task policy in `shared.md`.
+- Always read a relevant installed skill before starting matching work, even when you believe you already know how to do it. Skills are not optional.

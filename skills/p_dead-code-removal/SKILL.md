@@ -1,15 +1,21 @@
 ---
-name: dead-code-removal
-description: "Audit and remove literal dead code, obsolete compatibility shims, legacy-shaped facades, redundant defensive branches, stale exports, and duplicated fallback paths. Use when slimming an owned application or library, retiring a migration layer, deleting unused symbols, simplifying an architecture, or separating necessary resilience from conceptual dead code."
+name: p_dead-code-removal
+description: "Audit and remove literal dead code, obsolete compatibility shims, legacy-shaped facades, redundant defensive branches, stale exports, and duplicated fallback paths. Use when slimming an owned application or library, retiring a migration layer, deleting unused symbols, simplifying an architecture, or separating necessary resilience from conceptual dead code. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Dead Code Removal
 
 Use this skill to make a repository smaller by evidence, not by deleting every
 symbol whose name contains `legacy`, `compat`, `fallback`, or `deprecated`.
-Treat literal reachability and conceptual obsolescence as separate problems.
-Preserve behavior that protects external consumers, persisted data, runtime
-availability, or an explicitly supported migration.
+
+Before classifying any candidate, load the `dead-code-knowledge` skill for the
+evidence taxonomy (dead symbol / pure forwarding re-export / owned
+compatibility layer / conceptually dead behavior / live migration-or-resilience
+behavior) and the general operating stance on names-as-clues, re-export
+anti-patterns, and fallback evidence. This skill covers the procedure around
+that taxonomy: scoping an audit, building an evidence ledger, sequencing
+commits, and verifying a deletion.
 
 ## Operating stance
 
@@ -25,44 +31,8 @@ availability, or an explicitly supported migration.
   (using `git commit --amend`, `git rebase -i`, or `but absorb`). Never create
   separate fixup commits or leave dirty correction patches for errors introduced
   within the active feature branch.
-- Treat an owned end application differently from a published library. An
-  importable module is not automatically a public contract. If all callers are
-  owned, migrate them and delete the shim outright.
-- Double down against re-export and forwarding patterns. Python `__all__` lists,
-  `__init__.py` re-exports (`from .module import Symbol`), TypeScript barrel files
-  (`index.ts` re-exporting internal modules), and identity aliases are anti-patterns
-  to be eliminated. Direct all callers to import from canonical modules and
-  delete re-export wrappers outright.
-- Do not add indefinite deprecation windows, release gates, or compatibility
-  aliases without concrete evidence of an external consumer, persisted-data
-  requirement, daemon cross-version requirement, or rollback requirement.
 - Preserve unrelated user changes. Never reset a dirty worktree to make the
   audit easier.
-
-## Classify before deleting
-
-Put every candidate in one evidence class:
-
-1. **Dead symbol** — no source, test, configuration, script, entry-point, or
-   documented runtime caller. Delete it.
-2. **Pure forwarding code / re-export** — a re-export (`__all__`, `__init__.py`
-   forwarding, barrel re-export), identity alias, empty subclass, or constructor
-   that only forwards to the canonical implementation. Migrate owned callers to
-   import directly from the canonical definition module, then delete the re-export.
-3. **Owned compatibility layer** — callers still exist, but every caller is in
-   the repository and the application owns the cutover. Migrate callers in a
-   small slice, verify behavior, then delete the layer.
-4. **Conceptually dead behavior** — code still runs but duplicates a canonical
-   path, preserves an obsolete object shape, performs impossible-state
-   recovery, or supports a retired architecture. Establish the replacement,
-   migrate callers, prove parity, then remove the old path.
-5. **Live migration or resilience behavior** — database migrations, replay
-   handlers, cross-version daemon behavior, provider outage fallback, data
-   repair, or user-input validation. Do not delete until the protected state or
-   failure mode has a concrete replacement.
-
-Names are clues, not evidence. A function named `fallback` may be essential;
-a function with an ordinary name may be a dead adapter.
 
 ## Automated language-specific tools
 
@@ -102,11 +72,12 @@ For each candidate, record:
 | Candidate | Kind | Callers | Canonical replacement | Protected behavior | Decision |
 | --- | --- | --- | --- | --- | --- |
 
-Use `rg`/`rg --files` first. Use `repowise` or an equivalent symbol/caller tool
-when available for architecture questions, then verify findings against files.
-Search names, import paths, constructor calls, string registrations, config
-keys, and serialized field names. A zero textual match is not enough when
-reflection or plugin discovery exists.
+Classify `Kind` using the `dead-code-knowledge` taxonomy. Use `rg`/`rg --files`
+first. Use `repowise` or an equivalent symbol/caller tool when available for
+architecture questions, then verify findings against files. Search names,
+import paths, constructor calls, string registrations, config keys, and
+serialized field names. A zero textual match is not enough when reflection or
+plugin discovery exists.
 
 Useful starting searches include:
 
@@ -164,21 +135,8 @@ For an active facade, wrapper, defensive branch, or duplicate path:
 5. remove the old branch or facade once no callers remain;
 6. rerun parity tests between old and new paths during the transition.
 
-For defensive code, distinguish valid boundary validation from impossible-state
-handling. Replace broad `Any`, `getattr`, `hasattr`, catch-all exceptions, and
-`None` wrappers only after proving the typed construction path makes them
-unreachable. Do not turn a real provider, storage, or user-input failure into
-an assertion merely to reduce lines.
-
-For fallback code, identify what it protects:
-
-- user input or transient provider failure may be live behavior;
-- persisted-data migration and replay support require explicit migration
-  evidence;
-- a fallback that only supports an obsolete internal caller is a deletion
-  candidate after caller migration;
-- a fallback that duplicates the canonical path should be collapsed, not kept
-  as a second implementation forever.
+Use the `dead-code-knowledge` skill to classify defensive branches and
+fallback code before removing them.
 
 ### 6. Delegate safely
 

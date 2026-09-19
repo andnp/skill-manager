@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deduplicate Codebase"
+  short_description: "Find and remove duplicated truths, not just similar-looking code"
+  default_prompt: "Use $p_deduplicate-codebase to find up to 10 ranked sources of duplication in this repository and deliver a restructure that removes them."

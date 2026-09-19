@@ -1,0 +1,7 @@
+{
+  "subagent_model": {
+    "codex": "gpt-5.6-luna",
+    "claude": "sonnet",
+    "default": "the harness default low-cost model"
+  }
+}

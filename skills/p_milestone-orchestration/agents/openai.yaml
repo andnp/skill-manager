@@ -1,0 +1,4 @@
+interface:
+  display_name: "Milestone Orchestration"
+  short_description: "Deliver a large plan via milestone subagents"
+  default_prompt: "Use $p_milestone-orchestration to break this design doc/plan into milestones and deliver each via a subagent commit plan."

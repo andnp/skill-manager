@@ -1,6 +1,7 @@
 ---
-name: live-code-reviewer
-description: "Live pair-programmer and continuous diff reviewer. Monitors files or directories with a 2-minute debounce, reviews only the newly introduced diff, and provides focused feedback, edge case warnings, and architectural suggestions without editing code unprompted."
+name: p_live-code-reviewer
+description: "Live pair-programmer and continuous diff reviewer. Monitors files or directories with a 2-minute debounce, reviews only the newly introduced diff, and provides focused feedback, edge case warnings, and architectural suggestions without editing code unprompted. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Live Code Reviewer

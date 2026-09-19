@@ -1,6 +1,7 @@
 ---
-name: make-hexagonal
-description: Use when a person explicitly asks to move a codebase, service, or library toward hexagonal architecture. Find exactly one small, behavior-preserving boundary improvement, keep production and test changes within a 100-line budget, and propose the change before implementing it.
+name: p_make-hexagonal
+description: "Find exactly one small, behavior-preserving boundary improvement toward hexagonal architecture, keep production and test changes within a 100-line budget, and propose the change before implementing it. Invoke only when explicitly requested by name; do not self-trigger."
+invocation: manual
 ---
 
 # Make Hexagonal

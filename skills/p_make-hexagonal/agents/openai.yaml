@@ -1,4 +1,4 @@
 interface:
   display_name: "Make Hexagonal"
   short_description: "Find one small boundary improvement"
-  default_prompt: "Use $make-hexagonal to find one focused, behavior-preserving step toward hexagonal architecture."
+  default_prompt: "Use $p_make-hexagonal to find one focused, behavior-preserving step toward hexagonal architecture."

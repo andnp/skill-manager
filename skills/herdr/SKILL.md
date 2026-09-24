@@ -1,11 +1,30 @@
 ---
 name: herdr
-description: "Control Herdr, a terminal multiplexer for coding agents. Use only when the user explicitly mentions Herdr or asks to use Herdr to inspect or control panes, tabs, workspaces, commands, or another agent. Do not use merely because a task could benefit from a background terminal, delegation, or parallel work. Requires HERDR_ENV=1."
+description: "Control Herdr, a terminal multiplexer for coding agents. Use when the user asks to delegate work to another agent, names Gemini, Codex, or Claude as a delegate, or explicitly asks to inspect or control Herdr panes, tabs, workspaces, or commands. Gemini runs through the Antigravity CLI. Do not invoke solely because a task could benefit from parallel work. Requires HERDR_ENV=1."
 ---
 
 # Herdr
 
 Herdr organizes terminals into workspaces, tabs, and panes, recognizes coding agents running inside panes, and exposes the current session through the `herdr` CLI.
+
+## Delegate work to an agent
+
+Use this skill when the user asks to delegate work, including requests such as
+"delegate this to Gemini", "ask Codex to review this", or "have Claude implement
+this". Keep provider selection explicit: do not choose an agent merely because
+parallel work seems useful.
+
+Map Gemini requests to the Antigravity CLI (`agy`). Map Codex requests to Codex
+and Claude requests to Claude Code. Before starting one, run `herdr agent` and
+use the installed kind name and options it reports; do not assume a kind is
+available. If Herdr does not list the requested agent, report that limitation
+instead of launching a different provider.
+
+Settle the task scope, file boundaries, constraints, and definition of done
+before prompting the delegate. Include relevant context and verification steps
+in the prompt. For implementation work, carry forward any commit plan already
+agreed with the user. Inspect the resulting workspace and diff yourself and
+verify the delegate's claims before reporting completion.
 
 Before issuing any control command, verify that this agent is running inside a Herdr-managed pane:
 

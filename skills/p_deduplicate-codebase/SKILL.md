@@ -93,7 +93,7 @@ code:
   boundaries for the new canonical path and for proving behavior parity with
   what's being removed.
 - Identify and read the applicable commit-pattern / version-control skill
-  (commit planning, atomic commit shape, GitButler vs. plain git) and plan the
+  (commit planning, atomic commit shape) and plan the
   commit sequence with it before writing code.
 
 Do not invent ad hoc testing or commit conventions when a repository skill

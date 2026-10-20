@@ -81,5 +81,5 @@ Body is almost always required; omit only when the subject line is entirely self
 - Never start implementing a multi-commit plan before the plan is approved
 - Never write two commits' worth of changes then try to split after — revert and replay instead
 - Never put "how" in the commit body (belongs in code comments)
-- Fix linting/type errors introduced on an active feature branch by absorbing them into the commit that introduced them (via `git commit --amend`, `git rebase -i`, or `but absorb`), rather than stacking fixup commits
+- Fix linting/type errors introduced on an active feature branch by absorbing them into the commit that introduced them (via `git absorb --and-rebase`, `git commit --fixup` with `git rebase --autosquash`, or `git commit --amend`), rather than stacking fixup commits
 - Don't amend commits on shared integration branches (`main`/`master`) or branches you don't own

@@ -28,7 +28,8 @@ commits, and verifying a deletion.
   type mismatch, broken assertion, or bug introduced anywhere within the active
   feature branch (when on a branch other than `main`/`master`) must be absorbed
   or corrected directly into the feature branch commit that introduced it
-  (using `git commit --amend`, `git rebase -i`, or `but absorb`). Never create
+  (using `git absorb --and-rebase`, `git commit --fixup` with `git rebase --autosquash`,
+  or `git commit --amend`). Never create
   separate fixup commits or leave dirty correction patches for errors introduced
   within the active feature branch.
 - Preserve unrelated user changes. Never reset a dirty worktree to make the

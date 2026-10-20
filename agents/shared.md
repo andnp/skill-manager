@@ -64,11 +64,10 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 
 ### Fixes and absorption
 
-- In a GitButler workspace, every linting correction, type correction, bug fix, or error correction must be absorbed into the commit it fixes.
-- Run `but absorb <file-id> --dry-run` first and accept the target only when it introduced the code being fixed.
-- If the suggested target is wrong, investigate why and either fix the code location or split the work differently.
-- Do not create separate fix commits for corrections to your own work.
-- In non-GitButler repositories, use the repository's normal atomic commit workflow.
+- Every linting correction, type correction, bug fix, or error correction to your own unmerged work must be folded into the commit that introduced the code being fixed.
+- Stage the correction and run `git absorb --base <base> --dry-run` first; accept the target only when it introduced the code being fixed, then run `git absorb --base <base> --and-rebase`.
+- If absorb picks the wrong target or none, investigate why and either fix the code location, fold it by hand with `git commit --fixup=<sha>` and `git rebase --autosquash <base>`, or split the work differently.
+- Do not leave separate fix commits for corrections to your own work.
 
 ### Commit shape
 
@@ -92,8 +91,6 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 
 ## Version control and delegation
 
-- At the beginning of a conversation, run `but status` once to determine whether GitButler is active. Use GitButler commands only when it succeeds; otherwise use standard Git. Repeat the check only when the workspace state or required IDs may have changed.
-- Never add GitButler to a repository that is not already a GitButler workspace.
 - Before implementation work, read the applicable `create-commit` skill when it is available.
 - Typically prefer delegating well-scoped coding and implementation tasks to cheaper subagents; reserve more capable agents for ambiguous or higher-risk work.
 - Use an explorer for read-heavy investigation, a coder for well-scoped changes, and a complex coder for ambiguous or high-risk work.

@@ -56,7 +56,8 @@ Milestones commonly depend on each other's output (a table before the
 repository that reads it, a domain type before the algorithm using it), and
 all agents share one worktree — running them concurrently risks one agent's
 commit landing mid-way through another's edits. Parallelize only independent,
-non-overlapping milestones, and only with separate worktrees.
+non-overlapping milestones, and only with separate worktrees the user has
+asked for.
 
 ## Model selection
 

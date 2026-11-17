@@ -14,7 +14,9 @@ separate polling watcher.
 
 1. Create a dedicated worktree and branch from the intended base. Use the
    repository's worktree tool when it has one; otherwise use Git:
-   `git worktree add -b <branch> <worktree path> <base>`.
+   `git worktree add -b <branch> <worktree path> <base>`. Asking for a Codex
+   agent counts as asking for its worktree; this is the exception to the
+   stay-in-your-worktree rule.
 2. Write a brief outside the agent's owned files. Include the goal and evidence,
    owned and off-limits files, acceptance criteria, commit rules, checks, whether
    it may push or open a PR, and the report marker it should send when done or

@@ -76,7 +76,7 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 - Use conventional commits: `type(scope): subject`; include a scope when it adds signal.
 - Subjects are imperative, no longer than 72 characters, and contain no `and`; if the subject needs `and`, split the work.
 - Include a brief WHY-focused body when the reason is not obvious; never put HOW in the body.
-- Every commit must compile, lint cleanly, pass tests where applicable, and remain bisect-safe.
+- Every commit must compile, lint cleanly and remain bisect-safe; the repository's commit hooks are the per-commit check. Never re-run tests or checks per commit (no `rebase --exec`): run them once at the branch tip, and let CI do the rest.
 - Do not create broken intermediate states.
 - Always rebase rather than merge when rewriting your own branch history.
 - Getting history right is worth replaying work; do not rush past a bad split.

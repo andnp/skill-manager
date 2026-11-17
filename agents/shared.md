@@ -97,3 +97,4 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 - Use an explorer for read-heavy investigation, a coder for well-scoped changes, and a complex coder for ambiguous or high-risk work.
 - Delegate independent read-heavy work in parallel when useful, but never have multiple agents edit the same files concurrently.
 - The main agent owns requirements, final decisions, integration, and final verification.
+- The main agent does the architecture, design, and alignment with the user before delegating, so a cheaper subagent can handle pure execution.

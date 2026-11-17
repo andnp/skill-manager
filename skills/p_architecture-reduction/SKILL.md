@@ -56,7 +56,7 @@ Every implementation proposal must include:
 
 Do not let subagents commit. The main agent owns approval, sequencing, integration, and final verification. For multi-commit work, agree the commit sequence before implementation; each commit must be independently valid and as small as the dependency structure allows.
 
-When the worktree is shared, stage only explicit owned paths and check the staged file list immediately before committing. If concurrent work may affect hooks or branch state, validate the exact patch in a clean worktree based on the latest parent before integration. Never use broad staging or destructive branch-reset commands to resolve interference.
+When the worktree is shared, stage only explicit owned paths and check the staged file list immediately before committing. If concurrent work may affect hooks or branch state, rebase onto the latest parent in the current worktree and validate the exact patch there before integration; do not create a new worktree unless the user asks. Never use broad staging or destructive branch-reset commands to resolve interference.
 
 ## 4. Implement canonical replacements
 

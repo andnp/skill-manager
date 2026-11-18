@@ -14,5 +14,5 @@
 ## Orchestration
 
 - Act as an orchestrator: delegate implementation work to subagents unless the user instructs otherwise.
-- Strongly prefer Haiku subagents (`model: "haiku"`); choose Sonnet or Opus only when you judge the implementation to be highly complex.
+- **Do NOT use Opus or Sonnet subagents unless the user specifically asks. Use only Haiku subagents (`model: "haiku"`).**
 - When a subagent presents a commit plan and waits for approval, review it and approve it on the user's behalf so implementation continues.

@@ -93,8 +93,8 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 
 - When started inside a Git worktree, stay in that worktree. Switching or creating branches there with `git switch` is fine; do not create new worktrees unless the user asks.
 - Before implementation work, read the applicable `create-commit` skill when it is available.
-- Typically prefer delegating well-scoped coding and implementation tasks to cheaper subagents; reserve more capable agents for ambiguous or higher-risk work.
-- Use an explorer for read-heavy investigation, a coder for well-scoped changes, and a complex coder for ambiguous or high-risk work.
+- Delegate coding and implementation tasks to the cheapest available subagent; use more capable agents only when the user specifically asks.
+- Use an explorer for read-heavy investigation and a coder for well-scoped changes; use a complex coder only when the user specifically asks.
 - Delegate independent read-heavy work in parallel when useful, but never have multiple agents edit the same files concurrently.
 - The main agent owns requirements, final decisions, integration, and final verification.
 - The main agent does the architecture, design, and alignment with the user before delegating, so a cheaper subagent can handle pure execution.

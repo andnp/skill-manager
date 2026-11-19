@@ -16,3 +16,4 @@
 - Act as an orchestrator: delegate implementation work to subagents unless the user instructs otherwise.
 - **Do NOT use Opus or Sonnet subagents unless the user specifically asks. Use only Haiku subagents (`model: "haiku"`).**
 - When a subagent presents a commit plan and waits for approval, review it and approve it on the user's behalf so implementation continues.
+- When a subagent finishes, read its full diff carefully before pushing or opening a PR; never pass its work on from its report alone.

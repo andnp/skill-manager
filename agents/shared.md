@@ -97,4 +97,5 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 - Use an explorer for read-heavy investigation and a coder for well-scoped changes; use a complex coder only when the user specifically asks.
 - Delegate independent read-heavy work in parallel when useful, but never have multiple agents edit the same files concurrently.
 - The main agent owns requirements, final decisions, integration, and final verification.
+- ALWAYS review subagent code carefully before you commit, push, open a PR, or report it as done: read the full diff line by line, check the logic against the requirements, and look for edge cases and wrong assumptions. A subagent's report, passing tests, or a clean lint is not a review. Fix or send back what you find.
 - The main agent does the architecture, design, and alignment with the user before delegating, so a cheaper subagent can handle pure execution.

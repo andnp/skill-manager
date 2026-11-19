@@ -91,6 +91,7 @@ Andy reviews commits, not branches. Each commit must be perfect on its own.
 
 ## Version control and delegation
 
+- Always manage stacked PRs with `gh stack` (`init`, `add`, `rebase`, `sync`, `submit`): create, rebase and submit them through it rather than by hand-picking PR bases or rebasing branches manually.
 - When started inside a Git worktree, stay in that worktree. Switching or creating branches there with `git switch` is fine; do not create new worktrees unless the user asks.
 - Before implementation work, read the applicable `create-commit` skill when it is available.
 - Delegate coding and implementation tasks to the cheapest available subagent; use more capable agents only when the user specifically asks.
